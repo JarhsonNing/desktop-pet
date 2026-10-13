@@ -6,7 +6,7 @@
 
 `cargo run -- --simulate` 不创建窗口，不触碰桌面，验证互动状态流。CI 在 Windows x64、macOS Apple Silicon 与 Intel 编译、测试、lint，并创建可下载 ZIP。
 
-`scripts/ci_smoke.py` 在隔离目录启动真实设置窗口、采集自身 framebuffer PNG，然后启动透明宠物窗口并验证自动退出。CI 将 JSON 结果和图片单独上传；托管运行器可能没有可用图形驱动，因此这一步标记为非阻断，必须查看报告中的 `passed`，不能把整体 CI 绿色当成 GUI 烟测通过。
+`scripts/ci_smoke.py` 在隔离目录启动真实设置窗口、采集自身 framebuffer PNG，然后启动透明宠物窗口并验证自动退出。CI 将 JSON 结果和图片单独上传；三个托管平台均已通过原生启动验证，这一步作为阻断检查。如果运行器图形环境发生变化，需要检查报告中的 `passed` 和诊断信息，不能跳过失败。
 
 ## 每个平台的人工 GUI 验收
 
@@ -36,7 +36,8 @@
 ## 当前验证记录
 
 - macOS Apple Silicon：原生窗口启动 / 自动退出通过；控制面板通过真实 framebuffer 截图检查；发布构建资源采样见性能说明。
-- Windows x64：交叉 `cargo check` 通过；首轮 GitHub Actions 原生测试、lint、发布构建和 ZIP 打包通过。
-- Intel macOS：交叉 `cargo check` 通过；首轮 GitHub Actions 原生测试、lint、发布构建和 ZIP 打包通过。
+- Windows x64：交叉检查通过；GitHub Actions 原生测试、lint、发布构建、真实 GUI 启动 / 截图和 ZIP 打包通过。
+- Intel macOS：交叉检查通过；GitHub Actions 原生测试、lint、发布构建、真实 GUI 启动 / 截图和 ZIP 打包通过。
+- Apple Silicon macOS：GitHub Actions 原生测试、lint、发布构建、真实 GUI 启动 / 截图和 ZIP 打包通过。
 - 未自动执行真实桌面隐藏 / Finder 重启；恢复协议使用虚拟后端验证失败回滚、守护启动失败、过期守护、已有隐藏设置、活动租约和恢复失败保留日志。
 

@@ -8,7 +8,8 @@ use windows_sys::Win32::{
     },
     System::Threading::{GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
     UI::WindowsAndMessaging::{
-        EnumWindows, FindWindowExW, GetCursorPos, IsWindowVisible, SW_HIDE, SW_SHOWNA, ShowWindow,
+        EnumWindows, FindWindowExW, GetClassNameW, GetCursorPos, IsWindowVisible, SW_HIDE,
+        SW_SHOWNA, ShowWindow,
     },
 };
 
@@ -17,6 +18,13 @@ fn wide(text: &str) -> Vec<u16> {
 }
 
 unsafe extern "system" fn find_desktop(window: HWND, parameter: LPARAM) -> i32 {
+    let mut class_buffer = [0_u16; 256];
+    let count =
+        unsafe { GetClassNameW(window, class_buffer.as_mut_ptr(), class_buffer.len() as i32) };
+    let class = String::from_utf16_lossy(&class_buffer[..count.max(0) as usize]);
+    if !matches!(class.as_str(), "Progman" | "WorkerW") {
+        return 1;
+    }
     let shell_class = wide("SHELLDLL_DefView");
     let list_class = wide("SysListView32");
     let shell =
@@ -153,6 +161,11 @@ pub fn restore_icons(saved: &DesktopSnapshot) -> io::Result<()> {
     if *previous && unsafe { IsWindowVisible(window) } == 0 {
         unsafe {
             ShowWindow(window, SW_SHOWNA);
+        }
+        if unsafe { IsWindowVisible(window) } == 0 {
+            return Err(io::Error::other(
+                "Explorer refused to restore desktop icons; recovery journal retained",
+            ));
         }
     }
     Ok(())
