@@ -78,6 +78,7 @@ CPU 和内存是**实测结果，不作无依据的保证**。性能目标、测
 src/engine.rs       确定性情绪、互动、冷落升级与事件限频
 src/app.rs          透明宠物窗口、独立设置窗口、恢复工作线程
 src/art.rs          原生矢量角色，表情和弹性动作
+src/hover.rs        低开销悬停边界唤醒，不靠高帧率保证可点击
 src/shell.rs        托盘 / 菜单栏与全局快捷键
 src/platform/      Windows / macOS 光标与桌面适配
 src/safety.rs       恢复日志、单实例锁、独立恢复守护进程

@@ -8,6 +8,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+pub fn cursor_position(_scale: f32, reference_height: f32) -> Option<[f32; 2]> {
+    let point = NSEvent::mouseLocation();
+    Some([point.x as f32, reference_height - point.y as f32])
+}
+
 pub fn cursor(_scale: f32) -> Option<Cursor> {
     let marker = MainThreadMarker::new()?;
     let screens = NSScreen::screens(marker);
@@ -30,6 +35,7 @@ pub fn cursor(_scale: f32) -> Option<Cursor> {
                     work.size.width as f32,
                     work.size.height as f32,
                 ],
+                reference_height: top as f32,
             });
         }
     }

@@ -46,6 +46,17 @@ fn desktop() -> io::Result<HWND> {
     }
 }
 
+pub fn cursor_position(scale: f32, _reference_height: f32) -> Option<[f32; 2]> {
+    let mut point = POINT { x: 0, y: 0 };
+    if unsafe { GetCursorPos(&mut point) } == 0 {
+        return None;
+    }
+    Some([
+        point.x as f32 / scale.max(0.1),
+        point.y as f32 / scale.max(0.1),
+    ])
+}
+
 pub fn cursor(scale: f32) -> Option<Cursor> {
     let mut position = POINT { x: 0, y: 0 };
     unsafe {
@@ -67,6 +78,7 @@ pub fn cursor(scale: f32) -> Option<Cursor> {
                 (info.rcWork.right - info.rcWork.left) as f32 / scale,
                 (info.rcWork.bottom - info.rcWork.top) as f32 / scale,
             ],
+            reference_height: 0.0,
         })
     }
 }

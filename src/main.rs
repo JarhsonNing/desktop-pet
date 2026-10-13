@@ -5,6 +5,7 @@
 
 mod app;
 mod art;
+mod hover;
 mod shell;
 
 use desktop_pet::{

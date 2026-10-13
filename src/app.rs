@@ -1,5 +1,6 @@
 use crate::{
     Options, art,
+    hover::{HoverSampler, Probe},
     shell::{Shell, ShellAction},
 };
 use desktop_pet::{
@@ -95,6 +96,7 @@ pub struct PetApp {
     directory: PathBuf,
     _instance: File,
     desktop: DesktopWorker,
+    hover: HoverSampler,
     shell: Option<Shell>,
     shell_initialized: bool,
     settings: bool,
@@ -131,12 +133,14 @@ impl PetApp {
     ) -> Self {
         configure_style(&creation.egui_ctx);
         let desktop = DesktopWorker::new(directory.clone(), creation.egui_ctx.clone());
+        let hover = HoverSampler::new(creation.egui_ctx.clone());
         let settings = options.settings || options.screenshot.is_some() || status.is_some();
         Self {
             engine: Engine::new(config, 0.0, safety::timestamp()),
             directory,
             _instance: instance,
             desktop,
+            hover,
             shell: None,
             shell_initialized: false,
             settings,
@@ -764,6 +768,9 @@ impl eframe::App for PetApp {
             self.effect(effect);
         }
         let scale = self.engine.config.scale;
+        if self.hover.receiver.try_iter().count() > 0 {
+            self.next_cursor_poll = 0.0;
+        }
         if now >= self.next_cursor_poll {
             let native_scale =
                 context.input(|input| input.viewport().native_pixels_per_point.unwrap_or(1.0));
@@ -866,7 +873,7 @@ impl eframe::App for PetApp {
         let local = self.cursor.map(|cursor| {
             Pos2::new(cursor.position[0], cursor.position[1]) - self.position.to_vec2()
         });
-        let over_pet = local.is_none_or(|point| art::hit_test(point, scale));
+        let over_pet = local.is_none_or(|point| art::hit_test(point, scale, self.engine.mood, now));
         let over_recovery = self.engine.hidden
             && local.is_some_and(|point| {
                 point.y < 80.0 * scale && point.x > 12.0 * scale && point.x < 248.0 * scale
@@ -877,6 +884,20 @@ impl eframe::App for PetApp {
             self.passthrough = passthrough;
             context.send_viewport_cmd(ViewportCommand::MousePassthrough(passthrough));
         }
+        self.hover.publish(Probe {
+            position: self.position,
+            scale,
+            native_scale: context
+                .input(|input| input.viewport().native_pixels_per_point.unwrap_or(1.0)),
+            reference_height: self
+                .cursor
+                .map(|cursor| cursor.reference_height)
+                .unwrap_or(0.0),
+            enabled: self.options.screenshot.is_none() && self.cursor.is_some(),
+            recovery: self.engine.hidden,
+            mood: self.engine.mood,
+            elapsed: now,
+        });
         if self.options.screenshot.is_none() {
             self.draw_pet(context, now);
         }
@@ -907,6 +928,7 @@ impl eframe::App for PetApp {
         [0.0, 0.0, 0.0, 0.0]
     }
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.hover.stop();
         self.save();
         self.desktop.stop();
     }

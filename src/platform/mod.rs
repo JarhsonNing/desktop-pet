@@ -16,12 +16,17 @@ pub enum DesktopSnapshot {
 pub struct Cursor {
     pub position: [f32; 2],
     pub work_area: [f32; 4],
+    pub reference_height: f32,
 }
 
 #[cfg(target_os = "macos")]
-pub use macos::{cursor, hide_icons, parent_alive, restore_icons, snapshot, work_areas};
+pub use macos::{
+    cursor, cursor_position, hide_icons, parent_alive, restore_icons, snapshot, work_areas,
+};
 #[cfg(target_os = "windows")]
-pub use windows::{cursor, hide_icons, parent_alive, restore_icons, snapshot, work_areas};
+pub use windows::{
+    cursor, cursor_position, hide_icons, parent_alive, restore_icons, snapshot, work_areas,
+};
 
 pub fn supported() -> bool {
     cfg!(any(target_os = "windows", target_os = "macos"))
@@ -41,6 +46,10 @@ pub fn validate_snapshot(snapshot: &DesktopSnapshot) -> io::Result<()> {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub fn cursor(_scale: f32) -> Option<Cursor> {
+    None
+}
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub fn cursor_position(_scale: f32, _reference_height: f32) -> Option<[f32; 2]> {
     None
 }
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
