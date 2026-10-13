@@ -34,6 +34,21 @@ jobs:
       - run: cargo test --locked
       - run: cargo run --locked -- --simulate
       - run: cargo build --locked --release --target ${{ matrix.target }}
+      - name: Prepare CI-only Windows software renderer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'mesa.7z'
+          $destination = Join-Path $env:RUNNER_TEMP 'mesa'
+          Invoke-WebRequest -Uri 'https://github.com/pal1000/mesa-dist-win/releases/download/26.2.4/mesa3d-26.2.4-release-msvc.7z' -OutFile $archive
+          $expected = '351fc8c8b695878ffb3eaa044b3ead08672a48b1a045e3c3e3975811df0f6695'
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Mesa archive checksum mismatch' }
+          7z x $archive "-o$destination" -y | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'Mesa extraction failed' }
+          $binaryDirectory = 'target/${{ matrix.target }}/release'
+          Get-ChildItem "$destination/x64" -Filter '*.dll' -File | Copy-Item -Destination $binaryDirectory
+          if (!(Test-Path "$binaryDirectory/opengl32.dll")) { throw 'Mesa OpenGL driver missing' }
+          'GALLIUM_DRIVER=llvmpipe' >> $env:GITHUB_ENV
       - name: Native GUI smoke test
         shell: bash
         run: |
