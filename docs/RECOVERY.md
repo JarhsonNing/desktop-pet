@@ -1,0 +1,51 @@
+# 桌面图标恢复
+
+隐藏功能默认关闭，且最长设置为 30 秒。它只改变可见性，不操作桌面文件。
+
+## 正常恢复
+
+1. 按 `Ctrl+Alt+Shift+R`（macOS 的 Alt 为 Option）。
+2. 或使用托盘 / 菜单栏「立即恢复桌面 / 停止捣蛋」。
+3. 或使用面板恢复按钮、宠物气泡「立即归还」。
+4. 摸摸、投喂和其他互动也会请求归还。
+5. 不操作时等待倒计时；正常退出也会尝试恢复。
+
+恢复后暂停捣蛋 30 分钟（普通摸摸归还不进入忙碌模式）。
+
+## 宠物异常退出
+
+独立守护进程尝试恢复。若所有进程被强杀或系统桌面进程出错，重新打开应用：启动时先处理恢复日志，不会重复隐藏。
+
+macOS：
+
+```sh
+/Applications/Mochi.app/Contents/MacOS/desktop-pet --restore-desktop
+```
+
+Windows：运行安装包旁的 `Restore-Desktop.cmd`，或：
+
+```powershell
+.\Mochi.exe --restore-desktop
+```
+
+隔离测试目录产生的日志必须用同一个 `--data-dir PATH` 恢复。
+
+## 最后手动处理
+
+仅在日志恢复失败且确定是本应用隐藏之后使用。
+
+Windows：桌面空白处右键 → 查看 → 显示桌面图标。如 Explorer 故障，使用任务管理器重启 Windows 资源管理器。
+
+macOS：先确保 Finder 没有正在复制 / 移动文件的操作，再执行：
+
+```sh
+defaults write com.apple.finder CreateDesktop -bool true
+killall Finder
+```
+
+这会把 Finder 的桌面显示偏好明确设为开启；如需要恢复“原来没有该键”的状态，应根据恢复日志确认后用 `defaults delete com.apple.finder CreateDesktop`，再重启 Finder。不要在不明来源的日志指导下运行其他命令。
+
+## 恢复限制
+
+守护进程不是系统服务，不能在断电、所有进程被终止、权限被撤销或 Finder / Explorer 本身不可用时保证即时恢复。恢复日志保留到成功，Windows 不持久修改桌面文件；macOS 设置在系统中持久存在，所以提供启动恢复与命令行恢复。禁止把此功能改成删除 / 移动图标文件，或删除失败恢复日志。
+
