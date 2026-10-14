@@ -17,7 +17,7 @@ def main():
     report = {"binary": str(binary), "passed": False}
     with tempfile.TemporaryDirectory(prefix="mochi-smoke-") as directory:
         data = pathlib.Path(directory)
-        (data / "config.json").write_text("{}", encoding="utf-8")
+        (data / "config.json").write_text('{"clipboard_enabled":false,"roaming":false}', encoding="utf-8")
         screenshot = output / "control-panel.png"
         try:
             captured = subprocess.run([str(binary), "--data-dir", str(data), "--exit-after", "6", "--screenshot", str(screenshot)], capture_output=True, timeout=45)

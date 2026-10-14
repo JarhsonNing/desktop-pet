@@ -1,0 +1,8 @@
+{
+  "model": "gpt-image-2",
+  "mode": "imagegen CLI via previously authorized proxy",
+  "state": "dizzy",
+  "exit": 0,
+  "status": "done",
+  "duration_seconds": 41
+}

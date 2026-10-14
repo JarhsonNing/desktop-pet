@@ -30,6 +30,12 @@ pub struct Config {
     pub affinity: u32,
     pub feeds: u32,
     pub interactions: u32,
+    pub skin: Option<PathBuf>,
+    pub clipboard_enabled: bool,
+    pub clipboard_days: u32,
+    pub clipboard_limit: u32,
+    pub content_quota_gib: u32,
+    pub download_dropped_resources: bool,
 }
 
 impl Default for Config {
@@ -49,6 +55,12 @@ impl Default for Config {
             affinity: 10,
             feeds: 0,
             interactions: 0,
+            skin: None,
+            clipboard_enabled: true,
+            clipboard_days: 30,
+            clipboard_limit: 500,
+            content_quota_gib: 5,
+            download_dropped_resources: true,
         }
     }
 }
@@ -67,6 +79,9 @@ impl Config {
         self.neglect_seconds = self.neglect_seconds.clamp(30, 7200);
         self.icon_hide_seconds = self.icon_hide_seconds.clamp(5, 30);
         self.affinity = self.affinity.min(100);
+        self.clipboard_days = self.clipboard_days.clamp(1, 3650);
+        self.clipboard_limit = self.clipboard_limit.clamp(10, 100000);
+        self.content_quota_gib = self.content_quota_gib.clamp(1, 1024);
         if self.hide_icons_consent_version != 1 {
             self.allow_hide_icons = false;
         }
@@ -153,5 +168,6 @@ mod tests {
         assert_eq!(config.name, "团子");
         assert!(!config.allow_hide_icons);
         assert!(!config.allow_cursor_chase);
+        assert!(config.skin.is_none());
     }
 }

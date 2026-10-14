@@ -1,0 +1,6 @@
+{
+  "exit_code": 0,
+  "sampled_peak_working_set_mib": 225.2,
+  "screenshot_exists": true,
+  "scope": "6-second settings-window load smoke, not long-term performance"
+}

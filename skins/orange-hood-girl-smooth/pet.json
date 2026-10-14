@@ -1,0 +1,426 @@
+{
+  "canvas": [
+    320,
+    300
+  ],
+  "interaction_bounds": [
+    36,
+    84,
+    248,
+    206
+  ],
+  "gaze_origin": [
+    160,
+    155
+  ],
+  "gaze_distance": 140,
+  "chase_anchor": [
+    160,
+    165
+  ],
+  "palette": {
+    "ink": "#403840",
+    "fur": "#fff4e0",
+    "accent": "#bba2d8"
+  },
+  "bubble": {
+    "rect": [
+      24,
+      10,
+      272,
+      54
+    ],
+    "hidden_height": 70,
+    "text_inset": [
+      12,
+      9
+    ],
+    "font_size": 12,
+    "radius": 16,
+    "fill": "#fffdf9f5",
+    "text_color": "ink",
+    "stroke": {
+      "color": "#d8d1e0",
+      "width": 1
+    },
+    "restore_button": [
+      74,
+      40,
+      124,
+      24
+    ]
+  },
+  "states": {
+    "idle": {},
+    "happy": {},
+    "grumpy": {},
+    "sleep": {},
+    "dragged": {},
+    "play": {},
+    "chase": {},
+    "hiding": {},
+    "dizzy": {},
+    "walk": {}
+  },
+  "layers": [
+    {
+      "id": "sprite",
+      "node": {
+        "interactive": true,
+        "follow_scene": false,
+        "shape": {
+          "type": "image",
+          "origin": [
+            57.0,
+            84.0
+          ],
+          "size": [
+            206.0,
+            206.0
+          ],
+          "frames": [
+            "images/idle-000.png",
+            "images/idle-001.png",
+            "images/idle-002.png",
+            "images/idle-003.png",
+            "images/idle-004.png",
+            "images/idle-005.png",
+            "images/idle-006.png",
+            "images/idle-007.png",
+            "images/idle-008.png",
+            "images/idle-009.png",
+            "images/idle-010.png",
+            "images/idle-011.png",
+            "images/idle-012.png",
+            "images/idle-013.png",
+            "images/idle-014.png",
+            "images/idle-015.png",
+            "images/idle-016.png",
+            "images/idle-017.png"
+          ],
+          "fps": 6
+        }
+      },
+      "states": {
+        "happy": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/happy-000.png",
+              "images/happy-001.png",
+              "images/happy-002.png",
+              "images/happy-003.png",
+              "images/happy-004.png",
+              "images/happy-005.png",
+              "images/happy-006.png",
+              "images/happy-007.png",
+              "images/happy-008.png",
+              "images/happy-009.png",
+              "images/happy-010.png",
+              "images/happy-011.png",
+              "images/happy-012.png",
+              "images/happy-013.png",
+              "images/happy-014.png",
+              "images/happy-015.png",
+              "images/happy-016.png",
+              "images/happy-017.png"
+            ],
+            "fps": 24
+          }
+        },
+        "grumpy": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/grumpy-000.png",
+              "images/grumpy-001.png",
+              "images/grumpy-002.png",
+              "images/grumpy-003.png",
+              "images/grumpy-004.png",
+              "images/grumpy-005.png",
+              "images/grumpy-006.png",
+              "images/grumpy-007.png",
+              "images/grumpy-008.png",
+              "images/grumpy-009.png",
+              "images/grumpy-010.png",
+              "images/grumpy-011.png",
+              "images/grumpy-012.png",
+              "images/grumpy-013.png",
+              "images/grumpy-014.png",
+              "images/grumpy-015.png",
+              "images/grumpy-016.png",
+              "images/grumpy-017.png"
+            ],
+            "fps": 12
+          }
+        },
+        "sleep": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/sleep-000.png",
+              "images/sleep-001.png",
+              "images/sleep-002.png",
+              "images/sleep-003.png",
+              "images/sleep-004.png",
+              "images/sleep-005.png",
+              "images/sleep-006.png",
+              "images/sleep-007.png",
+              "images/sleep-008.png",
+              "images/sleep-009.png",
+              "images/sleep-010.png",
+              "images/sleep-011.png",
+              "images/sleep-012.png",
+              "images/sleep-013.png",
+              "images/sleep-014.png",
+              "images/sleep-015.png",
+              "images/sleep-016.png",
+              "images/sleep-017.png"
+            ],
+            "fps": 6
+          }
+        },
+        "dragged": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/dragged-000.png",
+              "images/dragged-001.png",
+              "images/dragged-002.png",
+              "images/dragged-003.png",
+              "images/dragged-004.png",
+              "images/dragged-005.png",
+              "images/dragged-006.png",
+              "images/dragged-007.png",
+              "images/dragged-008.png",
+              "images/dragged-009.png",
+              "images/dragged-010.png",
+              "images/dragged-011.png",
+              "images/dragged-012.png",
+              "images/dragged-013.png",
+              "images/dragged-014.png",
+              "images/dragged-015.png",
+              "images/dragged-016.png",
+              "images/dragged-017.png"
+            ],
+            "fps": 18
+          }
+        },
+        "play": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/play-000.png",
+              "images/play-001.png",
+              "images/play-002.png",
+              "images/play-003.png",
+              "images/play-004.png",
+              "images/play-005.png",
+              "images/play-006.png",
+              "images/play-007.png",
+              "images/play-008.png",
+              "images/play-009.png",
+              "images/play-010.png",
+              "images/play-011.png",
+              "images/play-012.png",
+              "images/play-013.png",
+              "images/play-014.png",
+              "images/play-015.png",
+              "images/play-016.png",
+              "images/play-017.png"
+            ],
+            "fps": 18
+          }
+        },
+        "chase": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/chase-000.png",
+              "images/chase-001.png",
+              "images/chase-002.png",
+              "images/chase-003.png",
+              "images/chase-004.png",
+              "images/chase-005.png",
+              "images/chase-006.png",
+              "images/chase-007.png",
+              "images/chase-008.png",
+              "images/chase-009.png",
+              "images/chase-010.png",
+              "images/chase-011.png"
+            ],
+            "fps": 24
+          }
+        },
+        "hiding": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/hiding-000.png",
+              "images/hiding-001.png",
+              "images/hiding-002.png",
+              "images/hiding-003.png",
+              "images/hiding-004.png",
+              "images/hiding-005.png",
+              "images/hiding-006.png",
+              "images/hiding-007.png",
+              "images/hiding-008.png",
+              "images/hiding-009.png",
+              "images/hiding-010.png",
+              "images/hiding-011.png",
+              "images/hiding-012.png",
+              "images/hiding-013.png",
+              "images/hiding-014.png",
+              "images/hiding-015.png",
+              "images/hiding-016.png",
+              "images/hiding-017.png"
+            ],
+            "fps": 12
+          }
+        },
+        "dizzy": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/dizzy-000.png",
+              "images/dizzy-001.png",
+              "images/dizzy-002.png",
+              "images/dizzy-003.png",
+              "images/dizzy-004.png",
+              "images/dizzy-005.png",
+              "images/dizzy-006.png",
+              "images/dizzy-007.png",
+              "images/dizzy-008.png",
+              "images/dizzy-009.png",
+              "images/dizzy-010.png",
+              "images/dizzy-011.png",
+              "images/dizzy-012.png",
+              "images/dizzy-013.png",
+              "images/dizzy-014.png",
+              "images/dizzy-015.png",
+              "images/dizzy-016.png",
+              "images/dizzy-017.png"
+            ],
+            "fps": 18
+          }
+        },
+        "walk": {
+          "interactive": true,
+          "follow_scene": false,
+          "shape": {
+            "type": "image",
+            "origin": [
+              57.0,
+              84.0
+            ],
+            "size": [
+              206.0,
+              206.0
+            ],
+            "frames": [
+              "images/walk-000.png",
+              "images/walk-001.png",
+              "images/walk-002.png",
+              "images/walk-003.png",
+              "images/walk-004.png",
+              "images/walk-005.png",
+              "images/walk-006.png",
+              "images/walk-007.png",
+              "images/walk-008.png",
+              "images/walk-009.png",
+              "images/walk-010.png",
+              "images/walk-011.png",
+              "images/walk-012.png",
+              "images/walk-013.png",
+              "images/walk-014.png",
+              "images/walk-015.png",
+              "images/walk-016.png",
+              "images/walk-017.png"
+            ],
+            "fps": 24
+          }
+        }
+      }
+    }
+  ]
+}

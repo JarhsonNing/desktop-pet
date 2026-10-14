@@ -1,0 +1,17 @@
+{
+  "dizzy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  }
+}

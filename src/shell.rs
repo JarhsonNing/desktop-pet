@@ -4,6 +4,9 @@ use std::sync::mpsc::{self, Receiver, Sender};
 #[derive(Debug, Clone, Copy)]
 pub enum ShellAction {
     Settings,
+    Clipboard,
+    Transfer,
+    ToggleClipboard,
     Feed,
     Quiet,
     Home,
@@ -35,6 +38,9 @@ impl Shell {
             let menu = Menu::new();
             let items = [
                 ("麻薯 · 控制面板", ShellAction::Settings),
+                ("剪切板历史", ShellAction::Clipboard),
+                ("文件中转站", ShellAction::Transfer),
+                ("暂停 / 开始剪切板记录", ShellAction::ToggleClipboard),
                 ("投喂一颗小饼干", ShellAction::Feed),
                 ("切换安静模式", ShellAction::Quiet),
                 ("回到角落", ShellAction::Home),
@@ -43,7 +49,7 @@ impl Shell {
             ];
             let mut mapping = Vec::new();
             for (index, (label, action)) in items.into_iter().enumerate() {
-                if index == 4 {
+                if index == 7 {
                     menu.append(&PredefinedMenuItem::separator())?;
                 }
                 let item = MenuItem::new(label, true, None);

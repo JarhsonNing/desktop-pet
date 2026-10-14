@@ -146,6 +146,19 @@ impl Engine {
         self.config.quiet || now < self.quiet_until
     }
 
+    /// Stops transient behaviors for exit; the caller must also restore desktop effects.
+    pub fn stop_mischief(&mut self, now: f64) {
+        self.hidden = false;
+        self.mood = Mood::Sleep;
+        self.bubble = None;
+        self.mood_until = now;
+        self.bubble_until = now;
+        self.effect_until = now;
+        self.stage = 0;
+        self.quiet_until = f64::INFINITY;
+        self.next_antic = f64::INFINITY;
+    }
+
     pub fn tick(&mut self, now: f64) -> Option<Effect> {
         if self.hidden
             && (now >= self.effect_until
@@ -242,6 +255,20 @@ impl Engine {
             12.0
         };
         std::time::Duration::from_secs_f64(1.0 / fps)
+    }
+
+    pub fn frame_interval_for_skin(
+        &self,
+        now: f64,
+        animation: Option<std::time::Duration>,
+    ) -> std::time::Duration {
+        let interval = self.frame_interval(now);
+        if self.quiet(now) || self.config.low_power {
+            return interval;
+        }
+        animation.map_or(interval, |animation| {
+            interval.min(animation.max(std::time::Duration::from_secs_f64(1.0 / 30.0)))
+        })
     }
 }
 
@@ -348,6 +375,87 @@ mod tests {
         ] {
             pet.mood = mood;
             assert_eq!(pet.frame_interval(0.0).as_millis(), 250);
+        }
+    }
+
+    #[test]
+    fn animated_skins_refresh_faster_but_obey_quiet_and_power_budgets() {
+        use std::time::Duration;
+        let mut pet = engine();
+        let frame = Duration::from_secs_f64(1.0 / 24.0);
+        let animation = Some(frame);
+        for mood in [
+            Mood::Idle,
+            Mood::Sleep,
+            Mood::Happy,
+            Mood::Walk,
+            Mood::Chase,
+        ] {
+            pet.mood = mood;
+            assert_eq!(
+                pet.frame_interval_for_skin(0.0, None),
+                pet.frame_interval(0.0)
+            );
+            assert_eq!(pet.frame_interval_for_skin(0.0, animation), frame);
+            assert_eq!(
+                pet.frame_interval_for_skin(0.0, Some(Duration::ZERO)),
+                Duration::from_secs_f64(1.0 / 30.0)
+            );
+            pet.config.low_power = true;
+            assert_eq!(
+                pet.frame_interval_for_skin(0.0, animation),
+                Duration::from_millis(250)
+            );
+            pet.config.quiet = true;
+            assert_eq!(
+                pet.frame_interval_for_skin(0.0, animation),
+                Duration::from_secs(1)
+            );
+            pet.config.quiet = false;
+            pet.config.low_power = false;
+        }
+        pet.interact(Interaction::Busy, 0.0);
+        assert_eq!(
+            pet.frame_interval_for_skin(1.0, animation),
+            Duration::from_secs(1)
+        );
+    }
+
+    #[test]
+    fn shutdown_stops_all_behaviors_without_changing_saved_preferences() {
+        for mood in [
+            Mood::Idle,
+            Mood::Happy,
+            Mood::Grumpy,
+            Mood::Sleep,
+            Mood::Dragged,
+            Mood::Play,
+            Mood::Chase,
+            Mood::Hiding,
+            Mood::Dizzy,
+            Mood::Walk,
+        ] {
+            let mut pet = engine();
+            pet.config.level = MischiefLevel::Devil;
+            pet.config.allow_cursor_chase = true;
+            pet.config.allow_hide_icons = true;
+            pet.config.hide_icons_consent_version = 1;
+            pet.begin_hide(90.0);
+            pet.mood = mood;
+            pet.stage = 3;
+            let saved = serde_json::to_value(&pet.config).unwrap();
+
+            pet.stop_mischief(91.0);
+            pet.stop_mischief(92.0);
+
+            assert!(!pet.hidden);
+            assert!(pet.bubble.is_none());
+            assert_eq!(pet.stage, 0);
+            for time in [93.0, 200.0, 10000.0] {
+                assert_eq!(pet.tick(time), None);
+                assert_eq!(pet.mood, Mood::Sleep);
+            }
+            assert_eq!(serde_json::to_value(&pet.config).unwrap(), saved);
         }
     }
 }

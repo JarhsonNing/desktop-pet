@@ -1,0 +1,960 @@
+{
+  "orange-hood-girl": {
+    "other_assets": {
+      "manifest.json": "54a0a8ec56506068ee57ff82489edea9f22489e4a07dfc74b9384f45bcc1ebab",
+      "images\\chase-000.png": "5fcfeb5a4ce7131d94bb38ca23bdd0533ae845e283c281a6c1aa1aaffcc307e6",
+      "images\\chase-001.png": "e1c7d945e5a0cd3468c9674a773f32e04cb84de695cb6556c1324cfa7356c70e",
+      "images\\chase-002.png": "e68462489abc2a2591a714a86a4c242209b3c35cc9d60c395bf133ddacec1915",
+      "images\\chase-003.png": "b219fda4e5514cd9ab77adbab49e834c68b4080203b12768ca921db46fe29ac6",
+      "images\\chase-004.png": "841bd5a4aac64f8ec77d041c21da8a85f6c0e42b506c89d4064c59afb1d85430",
+      "images\\chase-005.png": "c105964d48845872f5152e1993919680b86fe38d042260210ecb955643b87269",
+      "images\\dragged-000.png": "bea9253ea09e2e4c56804ed07e29669f0bdb34e9d0b2e7f6330d85e442ffdfb4",
+      "images\\dragged-001.png": "de479048200c2cc14710a145f4adbd692c0f49145b5579cc5f8ae847bf8e7ce4",
+      "images\\dragged-002.png": "6302c1fa3ac9774325d1557b35f07aef4102f6925b262fbe989826ed67ae259a",
+      "images\\dragged-003.png": "72b4ed3afeacb348b9311f0df398107e776533d17d6ea6f705918f549b5a93bd",
+      "images\\dragged-004.png": "6c9b59904052c75c134a3a9febc182b0f72a17a45b2a054c1ac4252f33153018",
+      "images\\dragged-005.png": "c69ccfd8577d946e8067d532ee2297cdb5dde2c973465bdb8cb7b94d33b8627c",
+      "images\\grumpy-000.png": "1719da82327b9300d822c000c37c7e729a2575dcff2e2c66f7c0d9ba97489123",
+      "images\\grumpy-001.png": "0f2a33d74902e8162204d31c06805451b25cc061a9ea276ba5b4c2bff621f9d6",
+      "images\\grumpy-002.png": "5321865ef00a74f85aa4f22be2a66d15e1be0cd24967fae2d4cddfe0491ded30",
+      "images\\grumpy-003.png": "b163dc6ed005328bf294639ec119ac6a570a39d5d64a2e04824b83a4769d0514",
+      "images\\grumpy-004.png": "5ccce27349b297dbf29efc6f5d61475737dcfd89a6015f98938ae783b6b3db89",
+      "images\\grumpy-005.png": "d262af1d987a91faf47e53c09451d4bf1b668f7974c6a3710794f821ba88713f",
+      "images\\happy-000.png": "9358001f4ab61b0d22cda9e969d1bf84fa5ff8db68d4b9754e633170547926ee",
+      "images\\happy-001.png": "4cf1240f6f936f8f6dc1f61316359b63092c3f5e48797b3b6a628cbf689bb515",
+      "images\\happy-002.png": "870b92144ff5d8610ea2dfb4ea6a7363f8bed9ab39dffb72c83466069673f7ed",
+      "images\\happy-003.png": "083c3af1df9be597d9369ec9278efd10700ef4f74d50c63485325c52f08fe434",
+      "images\\happy-004.png": "0064fa3ddba6dfda9bb931cbc058b75f8a01dde738abeaafc286382b07e4cebc",
+      "images\\happy-005.png": "f05fb6d920b55839c30a1373ec5046c1ffccaacaed262f47186e36191a8fe579",
+      "images\\hiding-000.png": "d942abb49af8de16858bf50c1dc667ff96bdd6b40adcdb1257409f6241e624cc",
+      "images\\hiding-001.png": "07c2ef98a37d7943ee0f7640ea9405e07c7050a36bbdb143f49aebeefddbe23e",
+      "images\\hiding-002.png": "36611b56c940d0938f63f291a242f9ea687593ef06e15764ed56a2598b8d0815",
+      "images\\hiding-003.png": "0b27e0d4195a046a687c2247d5ef80bcb5314e3bad2f14c15225e5d3a41ab843",
+      "images\\hiding-004.png": "0c86529384146d1b1dd845d522f6f1a8ba3c1a9750b5e5a5b5404c5d01d42796",
+      "images\\hiding-005.png": "5d79151ef1ed5104598c607ad972278ae1edc8e1c8fc3b3f7c6ad2063247c4fd",
+      "images\\idle-000.png": "1a88e5330b624bd8112cecdca355ff7ec8c2f2271f01d328c0568eb94d3b74f4",
+      "images\\idle-001.png": "97f432d1d8a0829b1056037c1048b8203d14fac782c32c0834f694678282ffdf",
+      "images\\idle-002.png": "a6623f20a3b439fe4ec1c37fbf5319db6076b11debaf2eeea1498fe7e0d4e569",
+      "images\\idle-003.png": "4432edc727b9650ee49ff4ecafca067a78104aeaa4874f87ae3d9874c3fc4a52",
+      "images\\idle-004.png": "e08050a97906654205427c8b5f9543675bd797754be478f07ba5a81212b79348",
+      "images\\idle-005.png": "61d4d8497d817916bf038da6e1f5c6b37087bca45e155a39a46b9ab7fd2bcfc2",
+      "images\\play-000.png": "4d1951179fd8490f46da8ed755d524d191381b1e1cfc25f7d2d2743965d3a7b0",
+      "images\\play-001.png": "71588337eb3162f6016389b52284f2b9d953322f56eb10327d6fe77f2a1bfbf3",
+      "images\\play-002.png": "4bfcabefc2a2537cc9f75b64947e9e1b89fe393dddebd3a9a8665a1ac9c8285f",
+      "images\\play-003.png": "2bc306637226e23e76e7f95cc82f1a799ab2cd555cea2bac987edc992b20d665",
+      "images\\play-004.png": "37d1a7a1b116d67ab623d7b411fc44574e1f4ecbf42d61ae7d5be4e2ebc6c8da",
+      "images\\play-005.png": "bd9c7ccbe97db7cdab3870f2df63656841d959d859bc4401d60bce2fa1d3e5e8",
+      "images\\sleep-000.png": "5ba8c3245c01d002ee949b4f69f7a4a5c2ec41c7d07281a704b869996e8467d6",
+      "images\\sleep-001.png": "feacae552af1f0f13de33f1de4ce9586ef26d4367815b6c87b4e0b19a24fa038",
+      "images\\sleep-002.png": "8e590cdc51dea326985ea51845812e454b99002e8cc069a9436c0a37221c128d",
+      "images\\sleep-003.png": "27d027604e7dfd47a6c3e6ee9391dabfa1f67df04011fbd6fe8413925e45157e",
+      "images\\sleep-004.png": "33eb0e45862d814a2e9685faa8fb3c8fba093d65c340a94456e7064fac5c7a20",
+      "images\\sleep-005.png": "807f88013bf319618ab131d67725664483c1c939dd2ea309f65f532138d2fec4",
+      "images\\walk-000.png": "923a8094458f5ae24c9eddfe549c0eb9889ebbe86687328cdd72a8af924b1e3c",
+      "images\\walk-001.png": "22222a27aacf5115b2075582269c06174732a39fb4e9f6a5c81d2a2940a0cc97",
+      "images\\walk-002.png": "b7b435ba5087e23e10b746e4d1cabc8ee83c2eb44afbcb285eacfb5afca42e04",
+      "images\\walk-003.png": "cf67cf0539ffe2913acb7887979824b4b6d9b6bec4534266fa0531c6ea1540ca",
+      "images\\walk-004.png": "2e07212980656c5486e1a6457116a143091fe1fccdf4057952caf48ea726c807",
+      "images\\walk-005.png": "b7320d0d383450f4ad710b4e019ea9bf5b2a1c838f3c7e0ea13a352e9fc4db36"
+    },
+    "other_ui": {
+      "canvas": [
+        320,
+        300
+      ],
+      "interaction_bounds": [
+        36,
+        84,
+        248,
+        206
+      ],
+      "gaze_origin": [
+        160,
+        155
+      ],
+      "gaze_distance": 140,
+      "chase_anchor": [
+        160,
+        165
+      ],
+      "palette": {
+        "ink": "#403840",
+        "fur": "#fff4e0",
+        "accent": "#bba2d8"
+      },
+      "bubble": {
+        "rect": [
+          24,
+          10,
+          272,
+          54
+        ],
+        "hidden_height": 70,
+        "text_inset": [
+          12,
+          9
+        ],
+        "font_size": 12,
+        "radius": 16,
+        "fill": "#fffdf9f5",
+        "text_color": "ink",
+        "stroke": {
+          "color": "#d8d1e0",
+          "width": 1
+        },
+        "restore_button": [
+          74,
+          40,
+          124,
+          24
+        ]
+      },
+      "states": {
+        "idle": {},
+        "happy": {},
+        "grumpy": {},
+        "sleep": {},
+        "dragged": {},
+        "play": {},
+        "chase": {},
+        "hiding": {},
+        "dizzy": {},
+        "walk": {}
+      },
+      "layers": [
+        {
+          "id": "sprite",
+          "node": {
+            "interactive": true,
+            "follow_scene": false,
+            "shape": {
+              "type": "image",
+              "origin": [
+                57.0,
+                84.0
+              ],
+              "size": [
+                206.0,
+                206.0
+              ],
+              "frames": [
+                "images/idle-000.png",
+                "images/idle-001.png",
+                "images/idle-002.png",
+                "images/idle-003.png",
+                "images/idle-004.png",
+                "images/idle-005.png"
+              ],
+              "fps": 2
+            }
+          },
+          "states": {
+            "happy": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/happy-000.png",
+                  "images/happy-001.png",
+                  "images/happy-002.png",
+                  "images/happy-003.png",
+                  "images/happy-004.png",
+                  "images/happy-005.png"
+                ],
+                "fps": 8
+              }
+            },
+            "grumpy": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/grumpy-000.png",
+                  "images/grumpy-001.png",
+                  "images/grumpy-002.png",
+                  "images/grumpy-003.png",
+                  "images/grumpy-004.png",
+                  "images/grumpy-005.png"
+                ],
+                "fps": 4
+              }
+            },
+            "sleep": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/sleep-000.png",
+                  "images/sleep-001.png",
+                  "images/sleep-002.png",
+                  "images/sleep-003.png",
+                  "images/sleep-004.png",
+                  "images/sleep-005.png"
+                ],
+                "fps": 2
+              }
+            },
+            "dragged": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/dragged-000.png",
+                  "images/dragged-001.png",
+                  "images/dragged-002.png",
+                  "images/dragged-003.png",
+                  "images/dragged-004.png",
+                  "images/dragged-005.png"
+                ],
+                "fps": 6
+              }
+            },
+            "play": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/play-000.png",
+                  "images/play-001.png",
+                  "images/play-002.png",
+                  "images/play-003.png",
+                  "images/play-004.png",
+                  "images/play-005.png"
+                ],
+                "fps": 6
+              }
+            },
+            "chase": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/chase-000.png",
+                  "images/chase-001.png",
+                  "images/chase-002.png",
+                  "images/chase-003.png",
+                  "images/chase-004.png",
+                  "images/chase-005.png"
+                ],
+                "fps": 12
+              }
+            },
+            "hiding": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/hiding-000.png",
+                  "images/hiding-001.png",
+                  "images/hiding-002.png",
+                  "images/hiding-003.png",
+                  "images/hiding-004.png",
+                  "images/hiding-005.png"
+                ],
+                "fps": 4
+              }
+            },
+            "walk": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/walk-000.png",
+                  "images/walk-001.png",
+                  "images/walk-002.png",
+                  "images/walk-003.png",
+                  "images/walk-004.png",
+                  "images/walk-005.png"
+                ],
+                "fps": 8
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dizzy": {
+      "interactive": true,
+      "follow_scene": false,
+      "shape": {
+        "type": "image",
+        "origin": [
+          57.0,
+          84.0
+        ],
+        "size": [
+          206.0,
+          206.0
+        ],
+        "frames": [
+          "images/dizzy-000.png",
+          "images/dizzy-001.png",
+          "images/dizzy-002.png",
+          "images/dizzy-003.png",
+          "images/dizzy-004.png",
+          "images/dizzy-005.png"
+        ],
+        "fps": 6
+      }
+    }
+  },
+  "orange-hood-girl-smooth": {
+    "other_assets": {
+      "manifest.json": "fba50799048cc1ce9a13b86e4630c4633d6e941140e57d57e3e05032e8464a05",
+      "images\\chase-000.png": "5fcfeb5a4ce7131d94bb38ca23bdd0533ae845e283c281a6c1aa1aaffcc307e6",
+      "images\\chase-001.png": "c5ff6016f75d364b9853c99199229dd2c22d9266f632ea9f144fa9133e302ce1",
+      "images\\chase-002.png": "e1c7d945e5a0cd3468c9674a773f32e04cb84de695cb6556c1324cfa7356c70e",
+      "images\\chase-003.png": "b737df3822abb28d6113edc57f7bccbe49451293f37a5c1a48d5de04b048f6be",
+      "images\\chase-004.png": "e68462489abc2a2591a714a86a4c242209b3c35cc9d60c395bf133ddacec1915",
+      "images\\chase-005.png": "8db24ce0e543247883a8981a48aa92df763999384db8fb0210ffbd0146972755",
+      "images\\chase-006.png": "b219fda4e5514cd9ab77adbab49e834c68b4080203b12768ca921db46fe29ac6",
+      "images\\chase-007.png": "75230f0aaa0f3e89dc8d35a88206b6322dd0f35e01ef57534c5040a0a1a0f124",
+      "images\\chase-008.png": "841bd5a4aac64f8ec77d041c21da8a85f6c0e42b506c89d4064c59afb1d85430",
+      "images\\chase-009.png": "c468e18fcddfadfdbdb6e0a6dbebbcb68c0920705b5f85595d9af10320651f70",
+      "images\\chase-010.png": "c105964d48845872f5152e1993919680b86fe38d042260210ecb955643b87269",
+      "images\\chase-011.png": "7d117772ceae7045be0644f4f95e469c6f4d841b97eafc5b0b29d7735c02137e",
+      "images\\dragged-000.png": "bea9253ea09e2e4c56804ed07e29669f0bdb34e9d0b2e7f6330d85e442ffdfb4",
+      "images\\dragged-001.png": "edfde391ee0f5602bde0ed2b6edd3768b3f37a1d00488f4230d6a9b9470c6178",
+      "images\\dragged-002.png": "cfc976d08aa39610b008e7d8e3b38991c937eafc55b14642d431edcf2eb17c60",
+      "images\\dragged-003.png": "de479048200c2cc14710a145f4adbd692c0f49145b5579cc5f8ae847bf8e7ce4",
+      "images\\dragged-004.png": "907689427d391fa00297973ae4937aa0203912bf2d697ed9c046fdf69c8521cc",
+      "images\\dragged-005.png": "7bdd9bb849cb3a82f803fbfbe9fc56207c71421c5e2730d7fc2ecc68a7a31c7f",
+      "images\\dragged-006.png": "6302c1fa3ac9774325d1557b35f07aef4102f6925b262fbe989826ed67ae259a",
+      "images\\dragged-007.png": "8d43260cefa6a3ed84a6b258788e8814c8868d2fda91bb4961df44d914539bf3",
+      "images\\dragged-008.png": "277663b1ba371603839ed86fe375ddb1236cb3ec3116a4c2654d3241107d4142",
+      "images\\dragged-009.png": "72b4ed3afeacb348b9311f0df398107e776533d17d6ea6f705918f549b5a93bd",
+      "images\\dragged-010.png": "a060b15f773bdd021bf6085fb3bb19f390858294ccc7c5c34f6a5288901d598d",
+      "images\\dragged-011.png": "295b6d57258f5c7eb0fcd439234220ae51826c61a0851ceab717b4edf1a3fe42",
+      "images\\dragged-012.png": "6c9b59904052c75c134a3a9febc182b0f72a17a45b2a054c1ac4252f33153018",
+      "images\\dragged-013.png": "282c11d72c4dea1a014813f12783bfbd6fe55909a2f7987b3d43ffacb0f115c0",
+      "images\\dragged-014.png": "d3337849e90ee298c50b874e555663f06deab7cbab7e0a4d875f28cf4d9f71d2",
+      "images\\dragged-015.png": "c69ccfd8577d946e8067d532ee2297cdb5dde2c973465bdb8cb7b94d33b8627c",
+      "images\\dragged-016.png": "8c9a28e3169cdba26d2bc54c53a5412fb1bcb4e0385f84bddadafa79a8bdb897",
+      "images\\dragged-017.png": "af8e34c8cbe8bb4cb1a8f46fdeb0dade469d1069672d857b8d44707d22815e44",
+      "images\\grumpy-000.png": "1719da82327b9300d822c000c37c7e729a2575dcff2e2c66f7c0d9ba97489123",
+      "images\\grumpy-001.png": "12e4f6f6feb852d4a95ba39d189a57acb99d97187d7deddfeb8658b1605fad9d",
+      "images\\grumpy-002.png": "3d08715aff56659f9bb03bdeda139482ecc87cd1edd5a6635f626df9c351dd06",
+      "images\\grumpy-003.png": "0f2a33d74902e8162204d31c06805451b25cc061a9ea276ba5b4c2bff621f9d6",
+      "images\\grumpy-004.png": "1ebdafdbb7e44b60b6620f71b61b877f9178c7f24952a1e1e97604a8c889c7aa",
+      "images\\grumpy-005.png": "1d05de940ecc1888224cb075f943e45115057c3d624d186af6e5c9a7b66e18fb",
+      "images\\grumpy-006.png": "5321865ef00a74f85aa4f22be2a66d15e1be0cd24967fae2d4cddfe0491ded30",
+      "images\\grumpy-007.png": "b431cb8060212477703665e45eafb90dd801c6a022947878ff39f3658d2359a6",
+      "images\\grumpy-008.png": "261fb145780bafa2ea6a857f642f5f6d8483d432f4590c6752c3f3c7aeeff15b",
+      "images\\grumpy-009.png": "5ccce27349b297dbf29efc6f5d61475737dcfd89a6015f98938ae783b6b3db89",
+      "images\\grumpy-010.png": "7c427d03d99d61417734d507643b34abcdbb9f637cd0bebee80db9bb97c90cd8",
+      "images\\grumpy-011.png": "3af8cfb7291c65d3dfef1052b2234044935687355754e50de0dc8d546af256b3",
+      "images\\grumpy-012.png": "d262af1d987a91faf47e53c09451d4bf1b668f7974c6a3710794f821ba88713f",
+      "images\\grumpy-013.png": "d10164f05dee8a757dea53d97e3786b0cd7a4bb57466c32720bfe40ba5537678",
+      "images\\grumpy-014.png": "4b8ce4c05a20e99c487bcd548bfd81ab9f500e376791994f688447ff42d62fe4",
+      "images\\grumpy-015.png": "b163dc6ed005328bf294639ec119ac6a570a39d5d64a2e04824b83a4769d0514",
+      "images\\grumpy-016.png": "cd53ef79854ce11cb1fa2af0823476320f90ca41bad71095c483bd3c96c70584",
+      "images\\grumpy-017.png": "7812ff538029dbe5c9c95504087daf27b4afbfc774c3da855e930db83eba67ba",
+      "images\\happy-000.png": "9358001f4ab61b0d22cda9e969d1bf84fa5ff8db68d4b9754e633170547926ee",
+      "images\\happy-001.png": "0002b96201411aeca5718c7829d91900dc05d43c473bd13b523a0fc42bf1e9e1",
+      "images\\happy-002.png": "7552d893ee10b5f044ff303f963e3b66867a09a701121bcf74f71d4ab3bac423",
+      "images\\happy-003.png": "4cf1240f6f936f8f6dc1f61316359b63092c3f5e48797b3b6a628cbf689bb515",
+      "images\\happy-004.png": "78adc915492a5e7114f50e282eaa6290a6b2c9fa1e2465c82977fae3d9707fae",
+      "images\\happy-005.png": "f4f614796d6c01f96e41e3c2de69c0290b4aef39265a10f3c0d018740cc311e5",
+      "images\\happy-006.png": "870b92144ff5d8610ea2dfb4ea6a7363f8bed9ab39dffb72c83466069673f7ed",
+      "images\\happy-007.png": "df7a7620fe92ac340650326551a04d9545f878c02b6eb7f2aa5665da8a225e62",
+      "images\\happy-008.png": "4d7c4069197071c50a37bb7b8edb0a2da1413a7bef041a761927fe088bde2057",
+      "images\\happy-009.png": "083c3af1df9be597d9369ec9278efd10700ef4f74d50c63485325c52f08fe434",
+      "images\\happy-010.png": "ad9f005719f7f940a1de89ca730eb0e83877b30c4b6c50c4c3aecd177ad45d35",
+      "images\\happy-011.png": "0e158474440e037c1a1664a804703957b668cd754fd2b4662081854bb83c8019",
+      "images\\happy-012.png": "0064fa3ddba6dfda9bb931cbc058b75f8a01dde738abeaafc286382b07e4cebc",
+      "images\\happy-013.png": "f3cce1c9fb4c5d80cc507d4413c0be22463c96d5aaed3019efdc4d910d1cd81b",
+      "images\\happy-014.png": "68e6182e494c90fe019abcaacd1c67d7277dd1ef5e106fb9f0657c3dffa13fc7",
+      "images\\happy-015.png": "f05fb6d920b55839c30a1373ec5046c1ffccaacaed262f47186e36191a8fe579",
+      "images\\happy-016.png": "617286bcd6bd499e82bf8b5560ec1f786f5173f37460d700daec320c636e2f6d",
+      "images\\happy-017.png": "795ceed105bb66259dd368dcaf3da8472f6d817a01d5adfd39c7e7da5a5e2bf2",
+      "images\\hiding-000.png": "d942abb49af8de16858bf50c1dc667ff96bdd6b40adcdb1257409f6241e624cc",
+      "images\\hiding-001.png": "6f143bfc340dbd39a56ce2031da85cf2b7cf134d59f4a4d9646b8eefcafd9947",
+      "images\\hiding-002.png": "4f217b0472e15da0acb9376f82b6ff71d68c7c398fd10dea48bce8682628ccd1",
+      "images\\hiding-003.png": "07c2ef98a37d7943ee0f7640ea9405e07c7050a36bbdb143f49aebeefddbe23e",
+      "images\\hiding-004.png": "b1320a2f41360904ce3e0f1dbd9c825542af0e3ce269c7239d8f3c3156ba510d",
+      "images\\hiding-005.png": "3b6667160821cb827142e6a8243518a8dabe7ef4adbd02dbb2d46d2aec17fc8e",
+      "images\\hiding-006.png": "36611b56c940d0938f63f291a242f9ea687593ef06e15764ed56a2598b8d0815",
+      "images\\hiding-007.png": "b3169198f35065284cbd09c62f928b4e0718e2ccc7939290ba51bfd9f1a236be",
+      "images\\hiding-008.png": "f9db14ec25916935f06087af73156b2d841c838952f35c168c49beb1b319975c",
+      "images\\hiding-009.png": "0b27e0d4195a046a687c2247d5ef80bcb5314e3bad2f14c15225e5d3a41ab843",
+      "images\\hiding-010.png": "f22095fb676a2bcffe5c521f6254e0b8d03732fb5efdcda76bfdac85a170d6fc",
+      "images\\hiding-011.png": "9a2825a5c61d1d0ae5ddc01f45eb7f58a4de1bf9326d9a1d54297c58cfca1d66",
+      "images\\hiding-012.png": "0c86529384146d1b1dd845d522f6f1a8ba3c1a9750b5e5a5b5404c5d01d42796",
+      "images\\hiding-013.png": "c085790f671a34da385ae5d24ef8485dafc72f921b89c09f5371a150642334cb",
+      "images\\hiding-014.png": "7d7de144ec58ca9dc76029efffbdd551d3f3c970c9023544b4a0b6a49d2eee65",
+      "images\\hiding-015.png": "5d79151ef1ed5104598c607ad972278ae1edc8e1c8fc3b3f7c6ad2063247c4fd",
+      "images\\hiding-016.png": "7146892b86a1169a90382fb7bb022b6691df86496da0f5430b235ce47581af98",
+      "images\\hiding-017.png": "e2fb9dbb7575590d7cb7f076f0a0ff5ee5f7e5f9d504fea81787225960dbc57c",
+      "images\\idle-000.png": "1a88e5330b624bd8112cecdca355ff7ec8c2f2271f01d328c0568eb94d3b74f4",
+      "images\\idle-001.png": "e14070ca61fb5cf71ab9bae85aa197eba95fdcb3f30531bcfef1787a9ac32a04",
+      "images\\idle-002.png": "936b6702ec1543411731d202a1853523b5f66fff2570f13bd99047460eda7562",
+      "images\\idle-003.png": "97f432d1d8a0829b1056037c1048b8203d14fac782c32c0834f694678282ffdf",
+      "images\\idle-004.png": "a7254662a9ab90060cdc5d3cfcdfde522ddde830039c48b6784ef455450018ea",
+      "images\\idle-005.png": "03a53189791f227711b90abb20eb2d083b46fafbc9d665bee0bc45b108d62bb5",
+      "images\\idle-006.png": "a6623f20a3b439fe4ec1c37fbf5319db6076b11debaf2eeea1498fe7e0d4e569",
+      "images\\idle-007.png": "ceb43e0846f7c8608a55895cb079c7bffb0a5d525ededd1f7b0d5aa1659f486f",
+      "images\\idle-008.png": "bd3bdbe829e7c7df4b824d59dd7f7569cc138d00f156bef7d4e6f2043fcab8b3",
+      "images\\idle-009.png": "4432edc727b9650ee49ff4ecafca067a78104aeaa4874f87ae3d9874c3fc4a52",
+      "images\\idle-010.png": "3080927b9d4c693c62f80e7c6501435b2f3d4da82aa2e4d983b288febf0f5137",
+      "images\\idle-011.png": "30693276efa74a316b0a321775976328fe691368634f491dc05cd13ca9f2c454",
+      "images\\idle-012.png": "e08050a97906654205427c8b5f9543675bd797754be478f07ba5a81212b79348",
+      "images\\idle-013.png": "e74f48034844fcdff7c56e8775c884f57a2c1f682e6373e95454868ddd7ad3e3",
+      "images\\idle-014.png": "f7afa4999e8d5720bc946891a82742570c06701261128a16ce8637fd10a085f6",
+      "images\\idle-015.png": "61d4d8497d817916bf038da6e1f5c6b37087bca45e155a39a46b9ab7fd2bcfc2",
+      "images\\idle-016.png": "29abdfb0cb1b69fc9fed835162855ce6fb59eb06a05ef63209afcca8986e05ee",
+      "images\\idle-017.png": "26c00543b74f169bfbdd48bcb286c33ae556f2d19dc592be74ebc5b2291e7640",
+      "images\\play-000.png": "4d1951179fd8490f46da8ed755d524d191381b1e1cfc25f7d2d2743965d3a7b0",
+      "images\\play-001.png": "894fb965584931397ffef98f04a7523d0f6ebd347067d97942d95a056260bff1",
+      "images\\play-002.png": "60d2489cbdc158902a9f8bfdb29f0d85d66f7e609bb6e823d4787cafe9b2a0b5",
+      "images\\play-003.png": "71588337eb3162f6016389b52284f2b9d953322f56eb10327d6fe77f2a1bfbf3",
+      "images\\play-004.png": "a7bf12c1679bb40bc714918ce0b772527e5577d2a06ba87e515f1406e12559b8",
+      "images\\play-005.png": "700e222cd1847814bad03bbc75320c82afbefe367c2d18dae242fe000f2af810",
+      "images\\play-006.png": "4bfcabefc2a2537cc9f75b64947e9e1b89fe393dddebd3a9a8665a1ac9c8285f",
+      "images\\play-007.png": "19d653e1ec83fadb6eeb9e92a42725659ef5fee62da35df910f867f9957c97c7",
+      "images\\play-008.png": "bf3a8600b895193b66edb6914c4caf8cf725f7b319e3459acc704ccda8feb66e",
+      "images\\play-009.png": "2bc306637226e23e76e7f95cc82f1a799ab2cd555cea2bac987edc992b20d665",
+      "images\\play-010.png": "89544b08fd2ecefadd1844aaa8e33747dad951b63a5cd475f1da4161f75131e1",
+      "images\\play-011.png": "17fb21f2d21dabd9bbee933b62f5f161e8fde32868fe1153348ca103ca72675a",
+      "images\\play-012.png": "37d1a7a1b116d67ab623d7b411fc44574e1f4ecbf42d61ae7d5be4e2ebc6c8da",
+      "images\\play-013.png": "284b5f2b4273994567a0226118b99c8d6e47929433bfa0acd32d7e58cffcb3df",
+      "images\\play-014.png": "2c2263c8982ccd970a12cec4556186a0d61ad12890817e1c38f23705a57179b4",
+      "images\\play-015.png": "bd9c7ccbe97db7cdab3870f2df63656841d959d859bc4401d60bce2fa1d3e5e8",
+      "images\\play-016.png": "4db75c9ff9d5a921763857663a7814f90c808bb71a49edb6577419277c929279",
+      "images\\play-017.png": "225ac0ee198899b156720a814c87110b94e39e08fb5d26f8f3395162ca5b6cfd",
+      "images\\sleep-000.png": "5ba8c3245c01d002ee949b4f69f7a4a5c2ec41c7d07281a704b869996e8467d6",
+      "images\\sleep-001.png": "57b581f2be92ef14550bf3d969dbf9736f17e88630261a207f4c401bbe164b9c",
+      "images\\sleep-002.png": "c2933624f8b97de08991ab00b3a8754634a9764eda4aaf5868ea73e9f9231688",
+      "images\\sleep-003.png": "feacae552af1f0f13de33f1de4ce9586ef26d4367815b6c87b4e0b19a24fa038",
+      "images\\sleep-004.png": "64d32bc0c9f2783b4372db0dabf49e8aa02a43dbeaba933af4c8f81000b41a85",
+      "images\\sleep-005.png": "fd8d106add8dd7c44ba9c9663b0995d778bfc95ac1f6d69cc7ab46480a9d5cec",
+      "images\\sleep-006.png": "8e590cdc51dea326985ea51845812e454b99002e8cc069a9436c0a37221c128d",
+      "images\\sleep-007.png": "c26b0b20dd33d4e2d95c630d925ee852ab4d66e07257d71d07d4fdfab8adb72d",
+      "images\\sleep-008.png": "bcdda9c66454ab9f428c7f41893c1844829896ed6fc35cc1377e85f642dffbf3",
+      "images\\sleep-009.png": "27d027604e7dfd47a6c3e6ee9391dabfa1f67df04011fbd6fe8413925e45157e",
+      "images\\sleep-010.png": "34dabb306bf0858315e63118a20e2a883830e8375d0561cfc5303dffb9aad0dd",
+      "images\\sleep-011.png": "b5f5ce439c21a21642b7ede1468b982de1168e125616eab5b3da192aab287975",
+      "images\\sleep-012.png": "33eb0e45862d814a2e9685faa8fb3c8fba093d65c340a94456e7064fac5c7a20",
+      "images\\sleep-013.png": "b702330a6d331c0834c2984e3b78baf77844f2c57e4e246549b8896e40aa6ab8",
+      "images\\sleep-014.png": "2a7adb274147b7e633831400d04a5703a4867c13d1f86d8d9c1814bc00b2dfa3",
+      "images\\sleep-015.png": "807f88013bf319618ab131d67725664483c1c939dd2ea309f65f532138d2fec4",
+      "images\\sleep-016.png": "d3bbd49a9f16bea265bc6494f0458d44612805cf0caf6b0ed0a9a49666f71024",
+      "images\\sleep-017.png": "1e5650b6baf55d0e0d363419b60b0d28a4d2123fcf2c787e9b596652151aa54f",
+      "images\\walk-000.png": "923a8094458f5ae24c9eddfe549c0eb9889ebbe86687328cdd72a8af924b1e3c",
+      "images\\walk-001.png": "a175b1495e670b148495fb811867de4b77042a3f9d34a8f8141dd697a480814d",
+      "images\\walk-002.png": "a3bceb55a6f9c17b85b10d9c348b0ff48ee46291354b6211d6d50d90ec11b950",
+      "images\\walk-003.png": "22222a27aacf5115b2075582269c06174732a39fb4e9f6a5c81d2a2940a0cc97",
+      "images\\walk-004.png": "daef137e359d09c3cfa4819336c3f9f32c0e43cb2537e76d50daeceee8423936",
+      "images\\walk-005.png": "d57262c3234605cd1a6c38359c3881d17c676572a57d490cb9bad1859e8c336f",
+      "images\\walk-006.png": "b7b435ba5087e23e10b746e4d1cabc8ee83c2eb44afbcb285eacfb5afca42e04",
+      "images\\walk-007.png": "fcff9d405464f2fad707e7df822814d868013628d7c086752c25abbb8e3a94fc",
+      "images\\walk-008.png": "08c7909d8691a5664b051abb7c9ea86d4e96dc420b046102d33c82af5f9457e7",
+      "images\\walk-009.png": "cf67cf0539ffe2913acb7887979824b4b6d9b6bec4534266fa0531c6ea1540ca",
+      "images\\walk-010.png": "97e9ba0511c7e7a056f198fd625ce3212bd6a9741d68858d931b1bb2c9561429",
+      "images\\walk-011.png": "a68518831dda0af16f0d1c10fcc1041ac3820af85a6c9ae3fd20d5f2fdd32a83",
+      "images\\walk-012.png": "2e07212980656c5486e1a6457116a143091fe1fccdf4057952caf48ea726c807",
+      "images\\walk-013.png": "8d39b529c124073e6c76a4d6c31e74335ef6eb1de6e6609d187e552a8af7a9cf",
+      "images\\walk-014.png": "5778160483228fca2b3e31a853a9bee3d0e4793da5478aadfe0d727ebf73a856",
+      "images\\walk-015.png": "b7320d0d383450f4ad710b4e019ea9bf5b2a1c838f3c7e0ea13a352e9fc4db36",
+      "images\\walk-016.png": "0f5e6699f50d327e6e9aeba1c2baee833cd24fbaf8bba5c5a9b58fcc37b51d67",
+      "images\\walk-017.png": "c27209a60e5b94f9c360f1c5d31bf894303d51f61045c09bb1b29feaa2a3df7b"
+    },
+    "other_ui": {
+      "canvas": [
+        320,
+        300
+      ],
+      "interaction_bounds": [
+        36,
+        84,
+        248,
+        206
+      ],
+      "gaze_origin": [
+        160,
+        155
+      ],
+      "gaze_distance": 140,
+      "chase_anchor": [
+        160,
+        165
+      ],
+      "palette": {
+        "ink": "#403840",
+        "fur": "#fff4e0",
+        "accent": "#bba2d8"
+      },
+      "bubble": {
+        "rect": [
+          24,
+          10,
+          272,
+          54
+        ],
+        "hidden_height": 70,
+        "text_inset": [
+          12,
+          9
+        ],
+        "font_size": 12,
+        "radius": 16,
+        "fill": "#fffdf9f5",
+        "text_color": "ink",
+        "stroke": {
+          "color": "#d8d1e0",
+          "width": 1
+        },
+        "restore_button": [
+          74,
+          40,
+          124,
+          24
+        ]
+      },
+      "states": {
+        "idle": {},
+        "happy": {},
+        "grumpy": {},
+        "sleep": {},
+        "dragged": {},
+        "play": {},
+        "chase": {},
+        "hiding": {},
+        "dizzy": {},
+        "walk": {}
+      },
+      "layers": [
+        {
+          "id": "sprite",
+          "node": {
+            "interactive": true,
+            "follow_scene": false,
+            "shape": {
+              "type": "image",
+              "origin": [
+                57.0,
+                84.0
+              ],
+              "size": [
+                206.0,
+                206.0
+              ],
+              "frames": [
+                "images/idle-000.png",
+                "images/idle-001.png",
+                "images/idle-002.png",
+                "images/idle-003.png",
+                "images/idle-004.png",
+                "images/idle-005.png",
+                "images/idle-006.png",
+                "images/idle-007.png",
+                "images/idle-008.png",
+                "images/idle-009.png",
+                "images/idle-010.png",
+                "images/idle-011.png",
+                "images/idle-012.png",
+                "images/idle-013.png",
+                "images/idle-014.png",
+                "images/idle-015.png",
+                "images/idle-016.png",
+                "images/idle-017.png"
+              ],
+              "fps": 6
+            }
+          },
+          "states": {
+            "happy": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/happy-000.png",
+                  "images/happy-001.png",
+                  "images/happy-002.png",
+                  "images/happy-003.png",
+                  "images/happy-004.png",
+                  "images/happy-005.png",
+                  "images/happy-006.png",
+                  "images/happy-007.png",
+                  "images/happy-008.png",
+                  "images/happy-009.png",
+                  "images/happy-010.png",
+                  "images/happy-011.png",
+                  "images/happy-012.png",
+                  "images/happy-013.png",
+                  "images/happy-014.png",
+                  "images/happy-015.png",
+                  "images/happy-016.png",
+                  "images/happy-017.png"
+                ],
+                "fps": 24
+              }
+            },
+            "grumpy": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/grumpy-000.png",
+                  "images/grumpy-001.png",
+                  "images/grumpy-002.png",
+                  "images/grumpy-003.png",
+                  "images/grumpy-004.png",
+                  "images/grumpy-005.png",
+                  "images/grumpy-006.png",
+                  "images/grumpy-007.png",
+                  "images/grumpy-008.png",
+                  "images/grumpy-009.png",
+                  "images/grumpy-010.png",
+                  "images/grumpy-011.png",
+                  "images/grumpy-012.png",
+                  "images/grumpy-013.png",
+                  "images/grumpy-014.png",
+                  "images/grumpy-015.png",
+                  "images/grumpy-016.png",
+                  "images/grumpy-017.png"
+                ],
+                "fps": 12
+              }
+            },
+            "sleep": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/sleep-000.png",
+                  "images/sleep-001.png",
+                  "images/sleep-002.png",
+                  "images/sleep-003.png",
+                  "images/sleep-004.png",
+                  "images/sleep-005.png",
+                  "images/sleep-006.png",
+                  "images/sleep-007.png",
+                  "images/sleep-008.png",
+                  "images/sleep-009.png",
+                  "images/sleep-010.png",
+                  "images/sleep-011.png",
+                  "images/sleep-012.png",
+                  "images/sleep-013.png",
+                  "images/sleep-014.png",
+                  "images/sleep-015.png",
+                  "images/sleep-016.png",
+                  "images/sleep-017.png"
+                ],
+                "fps": 6
+              }
+            },
+            "dragged": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/dragged-000.png",
+                  "images/dragged-001.png",
+                  "images/dragged-002.png",
+                  "images/dragged-003.png",
+                  "images/dragged-004.png",
+                  "images/dragged-005.png",
+                  "images/dragged-006.png",
+                  "images/dragged-007.png",
+                  "images/dragged-008.png",
+                  "images/dragged-009.png",
+                  "images/dragged-010.png",
+                  "images/dragged-011.png",
+                  "images/dragged-012.png",
+                  "images/dragged-013.png",
+                  "images/dragged-014.png",
+                  "images/dragged-015.png",
+                  "images/dragged-016.png",
+                  "images/dragged-017.png"
+                ],
+                "fps": 18
+              }
+            },
+            "play": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/play-000.png",
+                  "images/play-001.png",
+                  "images/play-002.png",
+                  "images/play-003.png",
+                  "images/play-004.png",
+                  "images/play-005.png",
+                  "images/play-006.png",
+                  "images/play-007.png",
+                  "images/play-008.png",
+                  "images/play-009.png",
+                  "images/play-010.png",
+                  "images/play-011.png",
+                  "images/play-012.png",
+                  "images/play-013.png",
+                  "images/play-014.png",
+                  "images/play-015.png",
+                  "images/play-016.png",
+                  "images/play-017.png"
+                ],
+                "fps": 18
+              }
+            },
+            "chase": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/chase-000.png",
+                  "images/chase-001.png",
+                  "images/chase-002.png",
+                  "images/chase-003.png",
+                  "images/chase-004.png",
+                  "images/chase-005.png",
+                  "images/chase-006.png",
+                  "images/chase-007.png",
+                  "images/chase-008.png",
+                  "images/chase-009.png",
+                  "images/chase-010.png",
+                  "images/chase-011.png"
+                ],
+                "fps": 24
+              }
+            },
+            "hiding": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/hiding-000.png",
+                  "images/hiding-001.png",
+                  "images/hiding-002.png",
+                  "images/hiding-003.png",
+                  "images/hiding-004.png",
+                  "images/hiding-005.png",
+                  "images/hiding-006.png",
+                  "images/hiding-007.png",
+                  "images/hiding-008.png",
+                  "images/hiding-009.png",
+                  "images/hiding-010.png",
+                  "images/hiding-011.png",
+                  "images/hiding-012.png",
+                  "images/hiding-013.png",
+                  "images/hiding-014.png",
+                  "images/hiding-015.png",
+                  "images/hiding-016.png",
+                  "images/hiding-017.png"
+                ],
+                "fps": 12
+              }
+            },
+            "walk": {
+              "interactive": true,
+              "follow_scene": false,
+              "shape": {
+                "type": "image",
+                "origin": [
+                  57.0,
+                  84.0
+                ],
+                "size": [
+                  206.0,
+                  206.0
+                ],
+                "frames": [
+                  "images/walk-000.png",
+                  "images/walk-001.png",
+                  "images/walk-002.png",
+                  "images/walk-003.png",
+                  "images/walk-004.png",
+                  "images/walk-005.png",
+                  "images/walk-006.png",
+                  "images/walk-007.png",
+                  "images/walk-008.png",
+                  "images/walk-009.png",
+                  "images/walk-010.png",
+                  "images/walk-011.png",
+                  "images/walk-012.png",
+                  "images/walk-013.png",
+                  "images/walk-014.png",
+                  "images/walk-015.png",
+                  "images/walk-016.png",
+                  "images/walk-017.png"
+                ],
+                "fps": 24
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dizzy": {
+      "interactive": true,
+      "follow_scene": false,
+      "shape": {
+        "type": "image",
+        "origin": [
+          57.0,
+          84.0
+        ],
+        "size": [
+          206.0,
+          206.0
+        ],
+        "frames": [
+          "images/dizzy-000.png",
+          "images/dizzy-001.png",
+          "images/dizzy-002.png",
+          "images/dizzy-003.png",
+          "images/dizzy-004.png",
+          "images/dizzy-005.png",
+          "images/dizzy-006.png",
+          "images/dizzy-007.png",
+          "images/dizzy-008.png",
+          "images/dizzy-009.png",
+          "images/dizzy-010.png",
+          "images/dizzy-011.png",
+          "images/dizzy-012.png",
+          "images/dizzy-013.png",
+          "images/dizzy-014.png",
+          "images/dizzy-015.png",
+          "images/dizzy-016.png",
+          "images/dizzy-017.png"
+        ],
+        "fps": 18
+      }
+    }
+  }
+}

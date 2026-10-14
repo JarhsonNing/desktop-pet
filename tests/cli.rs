@@ -59,3 +59,50 @@ fn a_second_instance_is_rejected_before_opening_a_window() {
     drop(_instance);
     fs::remove_dir_all(directory).unwrap();
 }
+
+#[test]
+fn skin_pack_check_and_unpack_do_not_start_the_pet() {
+    let directory = directory("skins");
+    fs::create_dir_all(&directory).unwrap();
+    let package = directory.join("default.mochi");
+    let data = directory.join("unused-data");
+    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("skins/default");
+    let executable = env!("CARGO_BIN_EXE_desktop-pet");
+    let packed = Command::new(executable)
+        .arg("--pack-skin")
+        .arg(source)
+        .arg("--output")
+        .arg(&package)
+        .arg("--data-dir")
+        .arg(&data)
+        .output()
+        .unwrap();
+    assert!(
+        packed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&packed.stderr)
+    );
+    let checked = Command::new(executable)
+        .arg("--check-skin")
+        .arg(&package)
+        .arg("--data-dir")
+        .arg(&data)
+        .output()
+        .unwrap();
+    assert!(checked.status.success());
+    let unpacked = directory.join("unpacked");
+    let extracted = Command::new(executable)
+        .arg("--unpack-skin")
+        .arg(&package)
+        .arg("--output")
+        .arg(&unpacked)
+        .arg("--data-dir")
+        .arg(&data)
+        .output()
+        .unwrap();
+    assert!(extracted.status.success());
+    assert!(unpacked.join("manifest.json").is_file());
+    assert!(unpacked.join("pet.json").is_file());
+    assert!(!data.exists());
+    fs::remove_dir_all(directory).unwrap();
+}

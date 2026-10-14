@@ -1,0 +1,72 @@
+{
+  "idle": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 6,
+    "loop_seconds": 3.0,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "happy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 24,
+    "loop_seconds": 0.75,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "grumpy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 12,
+    "loop_seconds": 1.5,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "sleep": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 6,
+    "loop_seconds": 3.0,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "dragged": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "play": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "chase": {
+    "original_frames": 6,
+    "frames": 12,
+    "fps": 24,
+    "loop_seconds": 0.5,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "hiding": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 12,
+    "loop_seconds": 1.5,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "dizzy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  },
+  "walk": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 24,
+    "loop_seconds": 0.75,
+    "method": "bidirectional DIS flow, premultiplied RGBA warping"
+  }
+}

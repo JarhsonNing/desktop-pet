@@ -1,0 +1,8 @@
+{
+  "format": "mochi.skin",
+  "version": 1,
+  "id": "mochi-classic",
+  "name": "Mochi Classic",
+  "author": "Mochi",
+  "ui": "pet.json"
+}

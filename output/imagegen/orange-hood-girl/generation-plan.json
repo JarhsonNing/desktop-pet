@@ -1,0 +1,26 @@
+{
+  "model": "gpt-image-2",
+  "mode": "imagegen CLI edit with identity reference",
+  "size": "1536x1024",
+  "sheet_grid": [
+    3,
+    2
+  ],
+  "final_frame_size": [
+    256,
+    256
+  ],
+  "background": "#FF00FF then local alpha extraction",
+  "states": [
+    "idle",
+    "happy",
+    "grumpy",
+    "sleep",
+    "dragged",
+    "play",
+    "chase",
+    "hiding",
+    "dizzy",
+    "walk"
+  ]
+}

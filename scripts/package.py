@@ -57,7 +57,11 @@ def main():
     else:
         shutil.copy2(binary, staging / "Mochi.exe")
         (staging / "Restore-Desktop.cmd").write_text('@echo off\r\n"%~dp0Mochi.exe" --restore-desktop\r\n', encoding="utf-8")
-    for source in ["README.md", "LICENSE", "docs/RECOVERY.md", "assets/FONT-LICENSE.txt"]:
+    skin_output = staging / "Skins"
+    skin_output.mkdir()
+    for skin_name in ["default", "blue", "png"]:
+        subprocess.run([str(binary), "--pack-skin", str(root / "skins" / skin_name), "--output", str(skin_output / f"{skin_name}.mochi")], check=True)
+    for source in ["README.md", "LICENSE", "docs/RECOVERY.md", "docs/SKINS.md", "docs/CONTENT.md", "assets/FONT-LICENSE.txt"]:
         shutil.copy2(root / source, staging / pathlib.Path(source).name)
     archive = output / f"{archive_name}.zip"
     if sys.platform == "darwin":

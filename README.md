@@ -11,6 +11,9 @@
 - 亲密度、投喂次数、互动次数本地保存；本次会话的小日记保留最近 30 条。
 - 冷落一段时间后逐步争宠：提醒 → 撒娇 / 追光标 → 经授权的图标捉迷藏。
 - 乖巧 / 调皮 / 小恶魔三档；安静模式、30 分钟忙碌模式、归窝、大小、节能和活动范围控制。
+- 可加载 `.mochi` / ZIP / 目录皮肤；造型、表情、动画、PNG 帧和气泡通过独立 UI 定义定制，面板预览与透明命中同步。
+- 剪切板历史：中文、多行文本、链接、图片及文件列表，支持搜索、收藏、重新复制和收纳；可随时暂停记录。
+- 文件中转站：把文件、文件夹、图片、文字或附件拖到宠物上，保存独立副本，在面板复制、另存或拖到其他应用。
 - 托盘 / macOS 菜单栏入口；透明区域穿透点击；追光标只做视觉遮挡，不控制鼠标、不拦截点击。
 - **经单独授权**可临时隐藏真实桌面图标，5–30 秒自动恢复；有独立恢复守护进程、恢复快捷键、启动恢复和命令行恢复。
 
@@ -56,7 +59,7 @@ cargo fmt --all -- --check
 cargo build --locked --release
 ```
 
-正常构建不需要 Node.js、Python 或下载字体，中文字体子集已内嵌。Python 3.11+ 仅用于打包或重新生成字体；重新生成字体需安装 `fonttools` 和 `brotli`。
+正常构建不需要 Node.js、Python 或下载字体，中文字体已内嵌。Python 3.11+ 仅用于打包或重新生成字体；重新生成字体需安装 `fonttools`，执行 `python scripts/prepare_font.py`。字体保留 Noto Sans CJK SC 的完整 Unicode 字符覆盖（44,810 个字符），包括简繁体和部分扩展区汉字；生成脚本仅移除界面不需要的区域及竖排替代字形。
 
 ```sh
 cargo run -- --simulate
@@ -68,33 +71,69 @@ sh scripts/profile_macos.sh target/release/desktop-pet quiet
 
 `--data-dir` 用于隔离测试数据；默认配置不受影响。测试和行为模拟不会隐藏真实桌面图标。
 
+## 定制皮肤
+
+控制面板的「皮肤」页可以加载 `.mochi`、ZIP 或皮肤目录，也可以拖到该页的专用加载区域。皮肤选择会保存，修改目录内的 UI 文件后点「再次加载」即可更新。拖到宠物上的普通文件和 ZIP 进入中转站。
+
+```sh
+cargo run -- --skin skins/blue --settings
+cargo run -- --check-skin skins/default
+cargo run -- --pack-skin skins/default --output dist/my-skin.mochi
+cargo run -- --unpack-skin dist/my-skin.mochi --output dist/my-skin-source
+```
+
+`.mochi` 是带版本文件头的自定义皮肤包，内部保存 JSON 定义和 PNG 资源。默认定义、换色示例和 PNG 模板位于 `skins/`，安装包的 `Skins/` 中提供对应包文件。格式、动画绑定和制作方法见 [皮肤说明](docs/SKINS.md)。
+
+想通过提示词创建自己的角色，可以使用仓库的 `mochi-skin-create` 技能。它会设计角色与动作，生成可编辑文件，并用真实渲染器预览和打包；用法见 [皮肤创建技能](docs/SKIN_SKILL.md)。
+
+精细角色可使用透明 PNG 动画帧，JSON 只绑定状态、帧顺序和播放参数。技能提供 `import_png.py`，支持按状态分目录的帧序列和十行精灵图，保留透明度并自动生成可加载皮肤；素材准备和导入命令见上述说明。
+
 ## 资源策略
 
-Rust + egui/eframe + Glow 原生渲染；关闭 vsync 和持续渲染，按事件与状态唤醒：待机 2 FPS、安静 1 FPS、活跃 12 FPS，节能模式活跃 4 FPS。没有联网、后台 AI、后台截图、视频解码或整套 WebView。中文字体仅包含界面需要的字符，昵称中未内嵌的字符可能显示为缺字。
+Rust + egui/eframe + Glow 原生渲染；关闭 vsync 和持续渲染，按事件与状态唤醒：矢量待机 2 FPS、矢量活跃 12 FPS；多帧 PNG 根据当前状态的播放速度提高重绘频率，最高 30 FPS；安静 1 FPS，节能模式 4 FPS。仅在收纳远程资源时下载，无上传；远程下载可关闭。没有后台 AI、后台截图、视频解码或整套 WebView。控制面板使用侧边导航、卡片布局和统一控件样式。昵称支持中文输入法，最多 16 个 Unicode 字符，在回车、失焦、切换页面或退出时保存；输入期间清空不会被默认名打断。
 
 CPU 和内存是**实测结果，不作无依据的保证**。性能目标、测量方法和平台差异见 [性能说明](docs/PERFORMANCE.md)。
+
+## 剪切板与中转站
+
+面板或托盘进入「剪切板」「中转站」。程序启动后记录新复制的内容，关闭面板仍会记录；暂停期间不补录。文本和图片保存完整内容，复制的文件只记录原路径，点击「收纳到中转站」才生成副本。历史默认保留 30 天、最近 500 条非收藏记录，收藏不参与自动清理。
+
+拖到宠物上会显示接收提示并暂停走动，保存后出现可点击的提示气泡。中转站保存文件和目录的独立副本，原文件不移动、不删除；普通网页链接只作为文字保存。准备完成后，可从详情中的拖动入口带到其他应用，默认是复制，原记录保留。
+
+内容库默认上限 5 GiB，可在偏好设置调整。空间不足先淘汰非收藏剪切板历史，仍不足会明确提示；不会自动删除中转内容或收藏。使用说明和保存位置见 [剪切板与中转站](docs/CONTENT.md)。
+
+```sh
+cargo run -- --settings-page clipboard
+cargo run -- --settings-page transfer
+```
 
 ## 项目结构
 
 ```text
 src/engine.rs       确定性情绪、互动、冷落升级与事件限频
 src/app.rs          透明宠物窗口、独立设置窗口、恢复工作线程
-src/art.rs          原生矢量角色，表情和弹性动作
+src/skin/           皮肤定义、校验、包读写、通用绘制和透明命中
+skins/              默认角色、换色示例和 PNG 模板的独立 UI 文件
+src/art.rs          控制面板配色、托盘图标与移动向量工具
+src/panel.rs        原生设置面板的卡片、导航、按钮与开关
+src/content/        SQLite 元数据、内容库、后台复制 / 下载 / 导出
+src/content_panel.rs 剪切板与中转站的列表、预览、搜索及操作
+src/native_content/ Windows / macOS 剪切板和系统原生拖放
 src/hover.rs        低开销悬停边界唤醒，不靠高帧率保证可点击
 src/shell.rs        托盘 / 菜单栏与全局快捷键
 src/platform/      Windows / macOS 光标与桌面适配
 src/safety.rs       恢复日志、单实例锁、独立恢复守护进程
 src/config.rs       本地配置、输入校验、原子写入
-scripts/            打包、字体子集、性能测量
+scripts/            打包、完整字体准备、性能测量
 ```
 
 技术决策见 [架构说明](docs/ARCHITECTURE.md)，验收步骤见 [测试清单](docs/TESTING.md)。
 
 ## 边界
 
-不删除 / 移动文件，不锁鼠标，不强制完成小游戏，不安装开机自启，不读取屏幕内容，不申请辅助功能 / 屏幕录制权限。完全退出后只在存在恢复租约时短暂保留恢复守护进程。强杀所有相关进程、Explorer / Finder 故障或系统权限变化可能阻止即时恢复，此时保留恢复日志，并提供重启和手动恢复入口。
+不删除 / 移动用户的原文件；仅删除用户选择的内容库记录和过期缓存。不锁鼠标，不强制完成小游戏，不安装开机自启，不读取屏幕内容，不申请辅助功能 / 屏幕录制权限。完全退出后只在存在恢复租约时短暂保留恢复守护进程。强杀所有相关进程、Explorer / Finder 故障或系统权限变化可能阻止即时恢复，此时保留恢复日志，并提供重启和手动恢复入口。
 
 ## 许可
 
-项目代码采用 MIT。内嵌字体 `Mochi Sans` 为 Noto Sans SC 的改名子集，采用 SIL Open Font License 1.1，见 `assets/FONT-LICENSE.txt`。依赖使用各自许可。
+项目代码采用 MIT。内嵌字体 `Mochi Sans` 基于 Noto Sans CJK SC，在保留完整 Unicode 字符覆盖的前提下转换为静态字体并改名，采用 SIL Open Font License 1.1，见 `assets/FONT-LICENSE.txt`。依赖使用各自许可。
 

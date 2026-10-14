@@ -1,0 +1,152 @@
+{
+  "idle": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 6,
+    "loop_seconds": 3.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "happy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 24,
+    "loop_seconds": 0.75,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "grumpy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 12,
+    "loop_seconds": 1.5,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      4,
+      5,
+      3
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "sleep": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 6,
+    "loop_seconds": 3.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "dragged": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "play": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "chase": {
+    "original_frames": 6,
+    "frames": 12,
+    "fps": 24,
+    "loop_seconds": 0.5,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "hiding": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 12,
+    "loop_seconds": 1.5,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "dizzy": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 18,
+    "loop_seconds": 1.0,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  },
+  "walk": {
+    "original_frames": 6,
+    "frames": 18,
+    "fps": 24,
+    "loop_seconds": 0.75,
+    "keyframe_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "method": "RIFE v4.6; original keyframes preserved; intermediate alpha recovered from green matte"
+  }
+}

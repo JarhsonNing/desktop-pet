@@ -1,0 +1,1877 @@
+{
+  "canvas": [
+    260,
+    250
+  ],
+  "interaction_bounds": [
+    54,
+    84,
+    170,
+    152
+  ],
+  "gaze_origin": [
+    130,
+    160
+  ],
+  "gaze_distance": 130,
+  "chase_anchor": [
+    124,
+    150
+  ],
+  "palette": {
+    "ink": "#2c3046",
+    "blue": "#5064e6",
+    "coral": "#f58f7a",
+    "cream": "#fff8e9",
+    "blush": "#f58f7ab3"
+  },
+  "bubble": {
+    "rect": [
+      12,
+      12,
+      236,
+      54
+    ],
+    "hidden_height": 66,
+    "text_inset": [
+      10,
+      9
+    ],
+    "font_size": 12,
+    "radius": 12,
+    "fill": "#fffffff5",
+    "text_color": "ink",
+    "stroke": {
+      "color": "#e1e2e9",
+      "width": 1
+    },
+    "restore_button": [
+      60,
+      38,
+      116,
+      23
+    ]
+  },
+  "states": {
+    "idle": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "happy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "grumpy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "sleep": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "dragged": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 3,
+            "speed": 15,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "play": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "chase": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "hiding": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "dizzy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": -6,
+            "speed": 7,
+            "phase": 0,
+            "absolute": true
+          }
+        }
+      ]
+    },
+    "walk": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    }
+  },
+  "layers": [
+    {
+      "id": "shadow",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            130,
+            222
+          ],
+          "radius": [
+            58,
+            7
+          ]
+        },
+        "fill": "#00000018",
+        "follow_scene": false
+      }
+    },
+    {
+      "id": "tail-outline",
+      "node": {
+        "shape": {
+          "type": "cubic",
+          "points": [
+            [
+              187,
+              194
+            ],
+            [
+              225,
+              190
+            ],
+            [
+              209,
+              150
+            ],
+            [
+              197,
+              172
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 9
+        },
+        "interactive": true
+      }
+    },
+    {
+      "id": "tail-fill",
+      "node": {
+        "shape": {
+          "type": "cubic",
+          "points": [
+            [
+              187,
+              194
+            ],
+            [
+              225,
+              190
+            ],
+            [
+              209,
+              150
+            ],
+            [
+              197,
+              172
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "cream",
+          "width": 4
+        }
+      }
+    },
+    {
+      "id": "left-foot",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            100,
+            213
+          ],
+          "radius": [
+            17,
+            10
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              100,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": 5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "dragged": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              100,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": 9,
+                  "speed": 20,
+                  "phase": 0,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "play": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              100,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": 5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "chase": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              100,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": 5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "walk": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              100,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": 5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        }
+      }
+    },
+    {
+      "id": "right-foot",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            162,
+            213
+          ],
+          "radius": [
+            17,
+            10
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              162,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": -5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "dragged": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              162,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": -9,
+                  "speed": 20,
+                  "phase": 0,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "play": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              162,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": -5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "chase": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              162,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": -5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "walk": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              162,
+              {
+                "base": 213,
+                "sine": {
+                  "amplitude": -5,
+                  "speed": 8,
+                  "phase": 1.5707963267948966,
+                  "absolute": false
+                }
+              }
+            ],
+            "radius": [
+              17,
+              10
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        }
+      }
+    },
+    {
+      "id": "left-ear",
+      "node": {
+        "shape": {
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              131
+            ],
+            [
+              82,
+              91
+            ],
+            [
+              111,
+              117
+            ]
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      }
+    },
+    {
+      "id": "right-ear",
+      "node": {
+        "shape": {
+          "type": "polygon",
+          "points": [
+            [
+              150,
+              115
+            ],
+            [
+              179,
+              90
+            ],
+            [
+              177,
+              132
+            ]
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      }
+    },
+    {
+      "id": "left-ear-inside",
+      "node": {
+        "shape": {
+          "type": "polygon",
+          "points": [
+            [
+              88,
+              117
+            ],
+            [
+              88,
+              102
+            ],
+            [
+              101,
+              116
+            ]
+          ]
+        },
+        "fill": "coral"
+      }
+    },
+    {
+      "id": "right-ear-inside",
+      "node": {
+        "shape": {
+          "type": "polygon",
+          "points": [
+            [
+              161,
+              115
+            ],
+            [
+              173,
+              102
+            ],
+            [
+              172,
+              119
+            ]
+          ]
+        },
+        "fill": "blue"
+      }
+    },
+    {
+      "id": "body",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            130,
+            164
+          ],
+          "radius": [
+            64,
+            52
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      },
+      "states": {
+        "sleep": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              130,
+              164
+            ],
+            "radius": [
+              64,
+              43.68
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        },
+        "dragged": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              130,
+              164
+            ],
+            "radius": [
+              64,
+              58.24000000000001
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        }
+      }
+    },
+    {
+      "id": "left-hand",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            72,
+            182
+          ],
+          "radius": [
+            11,
+            16
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      },
+      "states": {
+        "dragged": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              72,
+              155
+            ],
+            "radius": [
+              11,
+              16
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        }
+      }
+    },
+    {
+      "id": "right-hand",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            188,
+            182
+          ],
+          "radius": [
+            11,
+            16
+          ]
+        },
+        "fill": "cream",
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "interactive": true
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              188,
+              148
+            ],
+            "radius": [
+              11,
+              16
+            ]
+          },
+          "fill": "cream",
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          },
+          "interactive": true
+        }
+      }
+    },
+    {
+      "id": "left-cheek",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            91,
+            169
+          ],
+          "radius": [
+            11,
+            6
+          ]
+        },
+        "fill": "blush"
+      }
+    },
+    {
+      "id": "right-cheek",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            169,
+            169
+          ],
+          "radius": [
+            11,
+            6
+          ]
+        },
+        "fill": "blush"
+      }
+    },
+    {
+      "id": "left-eye",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 108,
+              "gaze": {
+                "axis": "x",
+                "amount": 3
+              }
+            },
+            {
+              "base": 153,
+              "gaze": {
+                "axis": "y",
+                "amount": 3
+              }
+            }
+          ],
+          "radius": [
+            4.3,
+            6
+          ]
+        },
+        "fill": "ink"
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "quadratic",
+            "points": [
+              [
+                101,
+                153
+              ],
+              [
+                108,
+                147
+              ],
+              [
+                115,
+                153
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 3
+          }
+        },
+        "sleep": {
+          "shape": {
+            "type": "quadratic",
+            "points": [
+              [
+                101,
+                153
+              ],
+              [
+                108,
+                156
+              ],
+              [
+                115,
+                153
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 3
+          }
+        },
+        "dizzy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                103,
+                148
+              ],
+              [
+                113,
+                158
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "left-eye-cross",
+      "node": {
+        "shape": {
+          "type": "line",
+          "points": [
+            [
+              113,
+              148
+            ],
+            [
+              103,
+              158
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "visible": false
+      },
+      "states": {
+        "dizzy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                113,
+                148
+              ],
+              [
+                103,
+                158
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "left-eye-light",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 109.2,
+              "gaze": {
+                "axis": "x",
+                "amount": 3
+              }
+            },
+            {
+              "base": 151,
+              "gaze": {
+                "axis": "y",
+                "amount": 3
+              }
+            }
+          ],
+          "radius": [
+            1.2,
+            1.2
+          ]
+        },
+        "fill": "#ffffff"
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 109.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        },
+        "sleep": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 109.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        },
+        "dizzy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 109.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        }
+      }
+    },
+    {
+      "id": "right-eye",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 151,
+              "gaze": {
+                "axis": "x",
+                "amount": 3
+              }
+            },
+            {
+              "base": 153,
+              "gaze": {
+                "axis": "y",
+                "amount": 3
+              }
+            }
+          ],
+          "radius": [
+            4.3,
+            6
+          ]
+        },
+        "fill": "ink"
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "quadratic",
+            "points": [
+              [
+                144,
+                153
+              ],
+              [
+                151,
+                147
+              ],
+              [
+                158,
+                153
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 3
+          }
+        },
+        "sleep": {
+          "shape": {
+            "type": "quadratic",
+            "points": [
+              [
+                144,
+                153
+              ],
+              [
+                151,
+                156
+              ],
+              [
+                158,
+                153
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 3
+          }
+        },
+        "dizzy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                146,
+                148
+              ],
+              [
+                156,
+                158
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "right-eye-cross",
+      "node": {
+        "shape": {
+          "type": "line",
+          "points": [
+            [
+              156,
+              148
+            ],
+            [
+              146,
+              158
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "visible": false
+      },
+      "states": {
+        "dizzy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                156,
+                148
+              ],
+              [
+                146,
+                158
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "right-eye-light",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 152.2,
+              "gaze": {
+                "axis": "x",
+                "amount": 3
+              }
+            },
+            {
+              "base": 151,
+              "gaze": {
+                "axis": "y",
+                "amount": 3
+              }
+            }
+          ],
+          "radius": [
+            1.2,
+            1.2
+          ]
+        },
+        "fill": "#ffffff"
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 152.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        },
+        "sleep": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 152.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        },
+        "dizzy": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 152.2,
+                "gaze": {
+                  "axis": "x",
+                  "amount": 3
+                }
+              },
+              {
+                "base": 151,
+                "gaze": {
+                  "axis": "y",
+                  "amount": 3
+                }
+              }
+            ],
+            "radius": [
+              1.2,
+              1.2
+            ]
+          },
+          "fill": "#ffffff",
+          "visible": false
+        }
+      }
+    },
+    {
+      "id": "left-brow",
+      "node": {
+        "shape": {
+          "type": "line",
+          "points": [
+            [
+              101,
+              139
+            ],
+            [
+              116,
+              144
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "visible": false
+      },
+      "states": {
+        "grumpy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                101,
+                139
+              ],
+              [
+                116,
+                144
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "right-brow",
+      "node": {
+        "shape": {
+          "type": "line",
+          "points": [
+            [
+              145,
+              144
+            ],
+            [
+              159,
+              139
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 2.8
+        },
+        "visible": false
+      },
+      "states": {
+        "grumpy": {
+          "shape": {
+            "type": "line",
+            "points": [
+              [
+                145,
+                144
+              ],
+              [
+                159,
+                139
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.8
+          }
+        }
+      }
+    },
+    {
+      "id": "nose",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            130,
+            165
+          ],
+          "radius": [
+            3,
+            3
+          ]
+        },
+        "fill": "coral"
+      }
+    },
+    {
+      "id": "mouth",
+      "node": {
+        "shape": {
+          "type": "quadratic",
+          "points": [
+            [
+              121,
+              176
+            ],
+            [
+              130,
+              186
+            ],
+            [
+              139,
+              176
+            ]
+          ]
+        },
+        "stroke": {
+          "color": "ink",
+          "width": 2.5
+        }
+      },
+      "states": {
+        "grumpy": {
+          "shape": {
+            "type": "quadratic",
+            "points": [
+              [
+                121,
+                176
+              ],
+              [
+                130,
+                168
+              ],
+              [
+                139,
+                176
+              ]
+            ]
+          },
+          "stroke": {
+            "color": "ink",
+            "width": 2.5
+          }
+        },
+        "sleep": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              131,
+              178
+            ],
+            "radius": [
+              4,
+              5
+            ]
+          },
+          "fill": "ink"
+        }
+      }
+    },
+    {
+      "id": "sleep-text",
+      "node": {
+        "shape": {
+          "type": "text",
+          "center": [
+            183,
+            104
+          ],
+          "text": "z Z",
+          "size": 20
+        },
+        "fill": "blue",
+        "visible": false
+      },
+      "states": {
+        "sleep": {
+          "shape": {
+            "type": "text",
+            "center": [
+              183,
+              104
+            ],
+            "text": "z Z",
+            "size": 20
+          },
+          "fill": "blue"
+        }
+      }
+    },
+    {
+      "id": "bandana",
+      "node": {
+        "shape": {
+          "type": "polygon",
+          "points": [
+            [
+              118,
+              198
+            ],
+            [
+              130,
+              206
+            ],
+            [
+              142,
+              198
+            ]
+          ]
+        },
+        "fill": "blue"
+      }
+    },
+    {
+      "id": "ball",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 45,
+              "sine": {
+                "amplitude": 18,
+                "speed": 3,
+                "phase": 0,
+                "absolute": false
+              }
+            },
+            209
+          ],
+          "radius": [
+            12,
+            12
+          ]
+        },
+        "fill": "blue",
+        "visible": false
+      },
+      "states": {
+        "play": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 45,
+                "sine": {
+                  "amplitude": 18,
+                  "speed": 3,
+                  "phase": 0,
+                  "absolute": false
+                }
+              },
+              209
+            ],
+            "radius": [
+              12,
+              12
+            ]
+          },
+          "fill": "blue"
+        },
+        "chase": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 45,
+                "sine": {
+                  "amplitude": 18,
+                  "speed": 3,
+                  "phase": 0,
+                  "absolute": false
+                }
+              },
+              209
+            ],
+            "radius": [
+              12,
+              12
+            ]
+          },
+          "fill": "blue"
+        }
+      }
+    },
+    {
+      "id": "ball-light",
+      "node": {
+        "shape": {
+          "type": "ellipse",
+          "center": [
+            {
+              "base": 42,
+              "sine": {
+                "amplitude": 18,
+                "speed": 3,
+                "phase": 0,
+                "absolute": false
+              }
+            },
+            205
+          ],
+          "radius": [
+            3,
+            3
+          ]
+        },
+        "fill": "#ffffffcc",
+        "visible": false
+      },
+      "states": {
+        "play": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 42,
+                "sine": {
+                  "amplitude": 18,
+                  "speed": 3,
+                  "phase": 0,
+                  "absolute": false
+                }
+              },
+              205
+            ],
+            "radius": [
+              3,
+              3
+            ]
+          },
+          "fill": "#ffffffcc"
+        },
+        "chase": {
+          "shape": {
+            "type": "ellipse",
+            "center": [
+              {
+                "base": 42,
+                "sine": {
+                  "amplitude": 18,
+                  "speed": 3,
+                  "phase": 0,
+                  "absolute": false
+                }
+              },
+              205
+            ],
+            "radius": [
+              3,
+              3
+            ]
+          },
+          "fill": "#ffffffcc"
+        }
+      }
+    },
+    {
+      "id": "icon-bag",
+      "node": {
+        "shape": {
+          "type": "rect",
+          "origin": [
+            104.5,
+            179.5
+          ],
+          "size": [
+            51,
+            31
+          ],
+          "radius": 9
+        },
+        "fill": "blue",
+        "visible": false
+      },
+      "states": {
+        "hiding": {
+          "shape": {
+            "type": "rect",
+            "origin": [
+              104.5,
+              179.5
+            ],
+            "size": [
+              51,
+              31
+            ],
+            "radius": 9
+          },
+          "fill": "blue"
+        }
+      }
+    },
+    {
+      "id": "icon-bag-label",
+      "node": {
+        "shape": {
+          "type": "text",
+          "center": [
+            130,
+            195
+          ],
+          "text": "ICONS",
+          "size": 10
+        },
+        "fill": "#ffffff",
+        "visible": false
+      },
+      "states": {
+        "hiding": {
+          "shape": {
+            "type": "text",
+            "center": [
+              130,
+              195
+            ],
+            "text": "ICONS",
+            "size": 10
+          },
+          "fill": "#ffffff"
+        }
+      }
+    },
+    {
+      "id": "right-sparkle",
+      "node": {
+        "shape": {
+          "type": "text",
+          "center": [
+            205,
+            121
+          ],
+          "text": "+",
+          "size": 24
+        },
+        "fill": "coral",
+        "visible": false
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "text",
+            "center": [
+              205,
+              121
+            ],
+            "text": "+",
+            "size": 24
+          },
+          "fill": "coral"
+        }
+      }
+    },
+    {
+      "id": "left-sparkle",
+      "node": {
+        "shape": {
+          "type": "text",
+          "center": [
+            63,
+            110
+          ],
+          "text": "+",
+          "size": 17
+        },
+        "fill": "blue",
+        "visible": false
+      },
+      "states": {
+        "happy": {
+          "shape": {
+            "type": "text",
+            "center": [
+              63,
+              110
+            ],
+            "text": "+",
+            "size": 17
+          },
+          "fill": "blue"
+        }
+      }
+    }
+  ]
+}

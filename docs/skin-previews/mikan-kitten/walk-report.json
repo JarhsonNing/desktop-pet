@@ -1,0 +1,27 @@
+{
+  "skin": "mikan-kitten",
+  "native_validation": "passed",
+  "states": [
+    "idle",
+    "happy",
+    "grumpy",
+    "sleep",
+    "dragged",
+    "play",
+    "chase",
+    "hiding",
+    "dizzy",
+    "walk"
+  ],
+  "bounds_warnings": [],
+  "native_renderer": "SkinRenderer",
+  "native_preview": "passed",
+  "mood": "walk",
+  "sample_fps": 12,
+  "frame_count": 48,
+  "unique_frames": 48,
+  "animation_gif": "animation.gif",
+  "loop_seam_mean_rgb_difference": 1.642,
+  "max_step_mean_rgb_difference": 1.601,
+  "loop_seam_needs_review": false
+}

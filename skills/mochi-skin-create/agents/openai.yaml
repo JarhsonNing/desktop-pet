@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mochi Skin Creator"
+  short_description: "Create expressive desktop-pet skins from your ideas"
+  default_prompt: "Use $mochi-skin-create to create a cute kitten skin with natural, lively movement."

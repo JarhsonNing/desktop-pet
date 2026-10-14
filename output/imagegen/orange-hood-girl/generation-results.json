@@ -1,0 +1,66 @@
+{
+  "mode": "imagegen CLI via user-supplied proxy",
+  "model": "gpt-image-2",
+  "states": [
+    {
+      "state": "idle",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 41
+    },
+    {
+      "state": "happy",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 45
+    },
+    {
+      "state": "walk",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 47
+    },
+    {
+      "state": "sleep",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 41
+    },
+    {
+      "state": "grumpy",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 47
+    },
+    {
+      "state": "dragged",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 38
+    },
+    {
+      "state": "play",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 45
+    },
+    {
+      "state": "chase",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 44
+    },
+    {
+      "state": "hiding",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 50
+    },
+    {
+      "state": "dizzy",
+      "status": "done",
+      "exit": 0,
+      "elapsed_seconds": 48
+    }
+  ]
+}

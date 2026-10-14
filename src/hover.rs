@@ -1,5 +1,4 @@
-use crate::art;
-use desktop_pet::{engine::Mood, platform};
+use desktop_pet::{engine::Mood, platform, skin::Skin};
 use eframe::egui::{self, Pos2};
 use std::{
     sync::{
@@ -11,8 +10,9 @@ use std::{
     time::Duration,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Probe {
+    pub skin: Arc<Skin>,
     pub position: Pos2,
     pub scale: f32,
     pub native_scale: f32,
@@ -21,11 +21,14 @@ pub struct Probe {
     pub recovery: bool,
     pub mood: Mood,
     pub elapsed: f64,
+    pub gaze: [f32; 2],
+    pub extras: Vec<egui::Rect>,
 }
 
 impl Default for Probe {
     fn default() -> Self {
         Self {
+            skin: Skin::builtin(),
             position: Pos2::ZERO,
             scale: 1.0,
             native_scale: 1.0,
@@ -34,6 +37,8 @@ impl Default for Probe {
             recovery: false,
             mood: Mood::Idle,
             elapsed: 0.0,
+            gaze: [0.0; 2],
+            extras: vec![],
         }
     }
 }
@@ -44,12 +49,23 @@ impl Probe {
             return false;
         }
         let local = Pos2::new(position[0], position[1]) - self.position.to_vec2();
-        art::hit_test(local, self.scale, self.mood, self.elapsed)
-            || self.recovery
-                && local.y > 12.0 * self.scale
-                && local.y < 80.0 * self.scale
-                && local.x > 12.0 * self.scale
-                && local.x < 248.0 * self.scale
+        self.extras.iter().any(|rect| rect.contains(local))
+            || crate::native_content::mouse_pressed() && {
+                let bounds = self.skin.ui.interaction_bounds;
+                egui::Rect::from_min_size(
+                    Pos2::new(bounds[0], bounds[1]) * self.scale,
+                    egui::Vec2::new(bounds[2], bounds[3]) * self.scale,
+                )
+                .contains(local)
+            }
+            || self.skin.hit_test(
+                [local.x, local.y],
+                self.scale,
+                self.mood,
+                self.elapsed,
+                self.gaze,
+            )
+            || self.recovery && self.skin.recovery_hit([local.x, local.y], self.scale)
     }
 }
 
@@ -71,7 +87,7 @@ impl HoverSampler {
             let mut previous = false;
             while alive.load(Ordering::Acquire) {
                 let state = match shared.lock() {
-                    Ok(state) => *state,
+                    Ok(state) => state.clone(),
                     Err(_) => break,
                 };
                 if state.enabled

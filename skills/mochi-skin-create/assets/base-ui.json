@@ -1,0 +1,15 @@
+{
+  "canvas": [320, 300], "interaction_bounds": [36, 84, 248, 206],
+  "gaze_origin": [160, 155], "gaze_distance": 140, "chase_anchor": [160, 165],
+  "palette": {"ink": "#403840", "fur": "#fff4e0", "accent": "#bba2d8"},
+  "bubble": {
+    "rect": [24, 10, 272, 54], "hidden_height": 70, "text_inset": [12, 9],
+    "font_size": 12, "radius": 16, "fill": "#fffdf9f5", "text_color": "ink",
+    "stroke": {"color": "#d8d1e0", "width": 1}, "restore_button": [74, 40, 124, 24]
+  },
+  "states": {"idle": {}, "happy": {}, "grumpy": {}, "sleep": {}, "dragged": {}, "play": {}, "chase": {}, "hiding": {}, "dizzy": {}, "walk": {}},
+  "layers": [{"id": "placeholder-body", "node": {
+    "interactive": true, "fill": "fur", "stroke": {"color": "ink", "width": 2.4},
+    "shape": {"type": "ellipse", "center": [160, 202], "radius": [45, 50]}
+  }}]
+}

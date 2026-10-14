@@ -5,13 +5,16 @@
 
 mod app;
 mod art;
+mod content_panel;
 mod hover;
+mod native_content;
+mod panel;
 mod shell;
 
 use desktop_pet::{
     config,
     engine::{Engine, Interaction},
-    safety,
+    safety, skin,
 };
 use std::{
     path::PathBuf,
@@ -25,9 +28,11 @@ use std::{
 #[derive(Default)]
 pub struct Options {
     pub settings: bool,
+    pub settings_page: usize,
     pub exit_after: Option<f64>,
     pub screenshot: Option<PathBuf>,
     pub capture_ok: Arc<AtomicBool>,
+    pub skin: Option<Arc<skin::Skin>>,
 }
 
 fn main() {
@@ -51,7 +56,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .any(|argument| argument == "--help" || argument == "-h")
     {
         println!(
-            "Mochi desktop pet\n  --settings              Open the control panel\n  --restore-desktop       Restore this app's active desktop visibility lease\n  --simulate              Run deterministic behavior simulation (no GUI/OS changes)\n  --exit-after SECONDS    Exit automatically (development)\n  --screenshot PATH      Save a rendered control-panel screenshot (development)\n  --data-dir PATH         Use an isolated configuration directory (development)"
+            "Mochi desktop pet\n  --settings              Open the control panel\n  --settings-page PAGE   Open home/preferences/journal/skin/clipboard/transfer\n  --skin PATH             Use a skin directory, .mochi package, or ZIP\n  --check-skin PATH       Validate a skin without starting the GUI\n  --pack-skin DIRECTORY   Pack a skin directory (requires --output FILE.mochi or FILE.zip)\n  --unpack-skin PACKAGE    Extract a skin into a new directory (requires --output)\n  --output PATH           Output file/directory for skin packaging\n  --restore-desktop       Restore this app's active desktop visibility lease\n  --simulate              Run deterministic behavior simulation (no GUI/OS changes)\n  --exit-after SECONDS    Exit automatically (development)\n  --screenshot PATH      Save a rendered control-panel screenshot (development)\n  --data-dir PATH         Use an isolated configuration directory (development)"
         );
         return Ok(());
     }
@@ -90,6 +95,26 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             None => Ok(None),
         }
     };
+    if let Some(directory) = value("--pack-skin")? {
+        let output = value("--output")?.ok_or("--pack-skin requires --output")?;
+        skin::pack(
+            std::path::Path::new(&directory),
+            std::path::Path::new(&output),
+        )?;
+        println!("Skin package saved: {output}");
+        return Ok(());
+    }
+    if let Some(path) = value("--unpack-skin")? {
+        let output = value("--output")?.ok_or("--unpack-skin requires --output")?;
+        skin::unpack(std::path::Path::new(&path), std::path::Path::new(&output))?;
+        println!("Skin unpacked: {output}");
+        return Ok(());
+    }
+    if let Some(path) = value("--check-skin")? {
+        let skin = skin::load(std::path::Path::new(&path))?;
+        println!("Valid skin: {} ({})", skin.manifest.name, skin.manifest.id);
+        return Ok(());
+    }
     let directory = if let Some(path) = value("--data-dir")? {
         PathBuf::from(path)
     } else if let Some(path) = std::env::var_os("MOCHI_DATA_DIR") {
@@ -117,7 +142,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let startup_recovery = safety::restore(&directory);
     let config_path = directory.join("config.json");
     let first_run = !config_path.exists();
-    let (config, warning) = match config::load(&config_path) {
+    let (mut config, warning) = match config::load(&config_path) {
         Ok(config) => (config, None),
         Err(error) => {
             let backup = directory.join(format!("config-invalid-{}.json", safety::timestamp()));
@@ -128,19 +153,58 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             )
         }
     };
-    let warning = warning.or_else(|| {
+    let mut warning = warning.or_else(|| {
         startup_recovery
             .err()
             .map(|error| format!("桌面恢复失败：{error}。请使用恢复按钮重试。"))
     });
+    let active_skin = if let Some(path) = value("--skin")? {
+        let path = PathBuf::from(path).canonicalize()?;
+        let skin = skin::load(&path)?;
+        config.skin = Some(path);
+        skin
+    } else if let Some(path) = &config.skin {
+        match skin::load(path) {
+            Ok(skin) => skin,
+            Err(error) => {
+                let message = format!("皮肤加载失败，使用默认皮肤：{error}");
+                warning = Some(warning.map_or_else(
+                    || message.clone(),
+                    |warning| format!("{warning}\n{message}"),
+                ));
+                skin::Skin::builtin()
+            }
+        }
+    } else {
+        skin::Skin::builtin()
+    };
+    let canvas = active_skin.ui.canvas;
+    let page = value("--settings-page")?;
+    let settings_page =
+        match page.as_deref() {
+            None | Some("home") => 0,
+            Some("preferences") => 1,
+            Some("journal") => 2,
+            Some("skin") => 3,
+            Some("clipboard") => 4,
+            Some("transfer") => 5,
+            Some(_) => return Err(
+                "Settings page must be home, preferences, journal, skin, clipboard, or transfer"
+                    .into(),
+            ),
+        };
     let options = Options {
-        settings: first_run || arguments.iter().any(|argument| argument == "--settings"),
+        settings: first_run
+            || page.is_some()
+            || arguments.iter().any(|argument| argument == "--settings"),
+        settings_page,
         exit_after: value("--exit-after")?
             .map(|text| text.parse::<f64>())
             .transpose()?
             .filter(|seconds| seconds.is_finite() && *seconds > 0.0),
         screenshot: value("--screenshot")?.map(PathBuf::from),
         capture_ok: Arc::new(AtomicBool::new(false)),
+        skin: Some(active_skin),
     };
     let screenshot_requested = options.screenshot.is_some();
     let capture_ok = options.capture_ok.clone();
@@ -149,16 +213,18 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         viewport: if screenshot_requested {
             eframe::egui::ViewportBuilder::default()
                 .with_title("麻薯 Mochi · 控制面板")
-                .with_inner_size([700.0, 720.0])
+                .with_inner_size([1000.0, 760.0])
+                .with_drag_and_drop(false)
         } else {
             eframe::egui::ViewportBuilder::default()
                 .with_title("麻薯 Mochi")
-                .with_inner_size([260.0 * scale, 250.0 * scale])
+                .with_inner_size([canvas[0] * scale, canvas[1] * scale])
                 .with_decorations(false)
                 .with_transparent(true)
                 .with_resizable(false)
                 .with_always_on_top()
                 .with_taskbar(false)
+                .with_drag_and_drop(false)
                 .with_active(false)
         },
         renderer: eframe::Renderer::Glow,

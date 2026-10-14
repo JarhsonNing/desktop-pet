@@ -1,0 +1,220 @@
+{
+  "canvas": [
+    260,
+    250
+  ],
+  "interaction_bounds": [
+    54,
+    84,
+    170,
+    152
+  ],
+  "gaze_origin": [
+    130,
+    160
+  ],
+  "gaze_distance": 130,
+  "chase_anchor": [
+    124,
+    150
+  ],
+  "palette": {
+    "ink": "#2c3046",
+    "blue": "#5064e6",
+    "coral": "#f58f7a",
+    "cream": "#fff8e9",
+    "blush": "#f58f7ab3"
+  },
+  "bubble": {
+    "rect": [
+      12,
+      12,
+      236,
+      54
+    ],
+    "hidden_height": 66,
+    "text_inset": [
+      10,
+      9
+    ],
+    "font_size": 12,
+    "radius": 12,
+    "fill": "#fffffff5",
+    "text_color": "ink",
+    "stroke": {
+      "color": "#e1e2e9",
+      "width": 1
+    },
+    "restore_button": [
+      60,
+      38,
+      116,
+      23
+    ]
+  },
+  "states": {
+    "idle": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "happy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "grumpy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "sleep": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "dragged": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 3,
+            "speed": 15,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "play": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "chase": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "hiding": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 1.3,
+            "speed": 2,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    },
+    "dizzy": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": -6,
+            "speed": 7,
+            "phase": 0,
+            "absolute": true
+          }
+        }
+      ]
+    },
+    "walk": {
+      "offset": [
+        0,
+        {
+          "base": 0,
+          "sine": {
+            "amplitude": 5,
+            "speed": 8,
+            "phase": 0,
+            "absolute": false
+          }
+        }
+      ]
+    }
+  },
+  "layers": [
+    {
+      "id": "sprite",
+      "node": {
+        "interactive": true,
+        "shape": {
+          "type": "image",
+          "origin": [
+            56,
+            86
+          ],
+          "size": [
+            168,
+            150
+          ],
+          "frames": [
+            "images/mochi.png"
+          ],
+          "fps": 12
+        }
+      }
+    }
+  ]
+}

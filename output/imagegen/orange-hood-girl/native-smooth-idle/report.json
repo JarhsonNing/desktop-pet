@@ -1,0 +1,27 @@
+{
+  "skin": "orange-hood-girl-smooth",
+  "native_validation": "passed",
+  "states": [
+    "idle",
+    "happy",
+    "grumpy",
+    "sleep",
+    "dragged",
+    "play",
+    "chase",
+    "hiding",
+    "dizzy",
+    "walk"
+  ],
+  "bounds_warnings": [],
+  "native_renderer": "SkinRenderer",
+  "native_preview": "passed",
+  "mood": "idle",
+  "sample_fps": 24,
+  "frame_count": 72,
+  "unique_frames": 18,
+  "animation_gif": "animation.gif",
+  "loop_seam_mean_rgb_difference": 1.915,
+  "max_step_mean_rgb_difference": 2.353,
+  "loop_seam_needs_review": false
+}
