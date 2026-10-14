@@ -3,6 +3,7 @@ import json
 import pathlib
 import struct
 import subprocess
+import sys
 import tempfile
 
 
@@ -20,7 +21,12 @@ def main():
         (data / "config.json").write_text('{"clipboard_enabled":false,"roaming":false}', encoding="utf-8")
         screenshot = output / "control-panel.png"
         try:
-            captured = subprocess.run([str(binary), "--data-dir", str(data), "--exit-after", "6", "--screenshot", str(screenshot)], capture_output=True, timeout=45)
+            capture_arguments = [str(binary), "--data-dir", str(data), "--exit-after", "12", "--screenshot", str(screenshot)]
+            # WebKit capture remains a separate macOS migration acceptance item.
+            if sys.platform == "darwin":
+                capture_arguments.append("--legacy-panel")
+            report["panel_renderer"] = "legacy-egui" if sys.platform == "darwin" else "tauri"
+            captured = subprocess.run(capture_arguments, capture_output=True, timeout=45)
             report["capture_exit_code"] = captured.returncode
             report["capture_stdout"] = captured.stdout.decode("utf-8", errors="replace")
             report["capture_stderr"] = captured.stderr.decode("utf-8", errors="replace")
@@ -31,7 +37,7 @@ def main():
                 raise RuntimeError("Missing or empty native framebuffer screenshot")
             width, height = struct.unpack(">II", image[16:24])
             report["screenshot_size"] = [width, height]
-            pet = subprocess.run([str(binary), "--data-dir", str(data), "--exit-after", "5"], capture_output=True, timeout=30)
+            pet = subprocess.run([str(binary), "--data-dir", str(data), "--no-shell", "--exit-after", "5"], capture_output=True, timeout=30)
             report["pet_exit_code"] = pet.returncode
             report["pet_stderr"] = pet.stderr.decode("utf-8", errors="replace")
             if pet.returncode != 0:

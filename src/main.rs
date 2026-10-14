@@ -7,8 +7,9 @@ mod app;
 mod art;
 mod content_panel;
 mod hover;
-mod native_content;
+pub use desktop_pet::native_content;
 mod panel;
+mod panel_host;
 mod shell;
 
 use desktop_pet::{
@@ -33,6 +34,11 @@ pub struct Options {
     pub screenshot: Option<PathBuf>,
     pub capture_ok: Arc<AtomicBool>,
     pub skin: Option<Arc<skin::Skin>>,
+    pub panel_binary: Option<PathBuf>,
+    pub panel_debug_port: Option<u16>,
+    pub legacy_panel: bool,
+    pub no_shell: bool,
+    pub control_stdin: bool,
 }
 
 fn main() {
@@ -56,7 +62,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .any(|argument| argument == "--help" || argument == "-h")
     {
         println!(
-            "Mochi desktop pet\n  --settings              Open the control panel\n  --settings-page PAGE   Open home/preferences/journal/skin/clipboard/transfer\n  --skin PATH             Use a skin directory, .mochi package, or ZIP\n  --check-skin PATH       Validate a skin without starting the GUI\n  --pack-skin DIRECTORY   Pack a skin directory (requires --output FILE.mochi or FILE.zip)\n  --unpack-skin PACKAGE    Extract a skin into a new directory (requires --output)\n  --output PATH           Output file/directory for skin packaging\n  --restore-desktop       Restore this app's active desktop visibility lease\n  --simulate              Run deterministic behavior simulation (no GUI/OS changes)\n  --exit-after SECONDS    Exit automatically (development)\n  --screenshot PATH      Save a rendered control-panel screenshot (development)\n  --data-dir PATH         Use an isolated configuration directory (development)"
+            "Mochi desktop pet\n  --settings              Open the on-demand Tauri panel\n  --settings-page PAGE   Open home/preferences/journal/skin/clipboard/transfer\n  --skin PATH             Use a skin directory, .mochi package, or ZIP\n  --check-skin PATH       Validate a skin without starting the GUI\n  --pack-skin DIRECTORY   Pack a skin directory (requires --output FILE.mochi or FILE.zip)\n  --unpack-skin PACKAGE    Extract a skin into a new directory (requires --output)\n  --output PATH           Output file/directory for skin packaging\n  --restore-desktop       Restore this app's active desktop visibility lease\n  --simulate              Run deterministic behavior simulation (no GUI/OS changes)\n  --exit-after SECONDS    Exit automatically (development)\n  --screenshot PATH      Save a real Tauri screenshot on Windows (development)\n  --data-dir PATH         Use an isolated configuration directory (development)\n  --panel-binary PATH     Override the sibling panel executable\n  --panel-debug-port PORT Enable panel WebView debugging (development)\n  --legacy-panel          Use the old egui panel for comparison (development)\n  --no-shell              Skip tray/hotkeys for isolated tests (development)\n  --control-stdin         Enable private lifecycle test commands (development)"
         );
         return Ok(());
     }
@@ -205,12 +211,24 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         screenshot: value("--screenshot")?.map(PathBuf::from),
         capture_ok: Arc::new(AtomicBool::new(false)),
         skin: Some(active_skin),
+        panel_binary: value("--panel-binary")?.map(PathBuf::from),
+        panel_debug_port: value("--panel-debug-port")?
+            .map(|v| v.parse())
+            .transpose()?,
+        no_shell: arguments.iter().any(|argument| argument == "--no-shell"),
+        control_stdin: arguments
+            .iter()
+            .any(|argument| argument == "--control-stdin"),
+        legacy_panel: arguments
+            .iter()
+            .any(|argument| argument == "--legacy-panel"),
     };
     let screenshot_requested = options.screenshot.is_some();
+    let legacy_screenshot = screenshot_requested && options.legacy_panel;
     let capture_ok = options.capture_ok.clone();
     let scale = config.scale;
     let native = eframe::NativeOptions {
-        viewport: if screenshot_requested {
+        viewport: if legacy_screenshot {
             eframe::egui::ViewportBuilder::default()
                 .with_title("麻薯 Mochi · 控制面板")
                 .with_inner_size([1000.0, 760.0])

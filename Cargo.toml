@@ -6,6 +6,12 @@ rust-version = "1.88"
 description = "Mochi: a small, mischievous native desktop companion"
 license = "MIT"
 repository = "https://github.com/JarhsonNing/desktop-pet"
+default-run = "desktop-pet"
+
+[workspace]
+members = ["panel/src-tauri"]
+default-members = ["."]
+resolver = "3"
 
 [dependencies]
 eframe = { version = "=0.33.3", default-features = false, features = ["default_fonts", "glow"] }
@@ -21,6 +27,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 tokio = { version = "1", features = ["rt", "time", "macros"] }
 raw-window-handle = "0.6"
 rfd = "0.15"
+base64 = "0.22"
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tray-icon = "0.21"
@@ -36,7 +43,7 @@ libc = "0.2"
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi", "Win32_System_Threading", "Win32_Storage_FileSystem"] }
 windows-core = "0.61"
-windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Com_Marshal", "Win32_System_Com_StructuredStorage", "Win32_System_SystemServices", "Win32_System_Ole", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_System_Threading", "Win32_UI_Controls", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Shell", "Win32_Graphics_Gdi"] }
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Com_Marshal", "Win32_System_Com_StructuredStorage", "Win32_System_SystemServices", "Win32_System_Ole", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_System_Threading", "Win32_UI_Controls", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Shell", "Win32_UI_HiDpi", "Win32_Graphics_Gdi"] }
 rusqlite = { version = "0.37", features = ["bundled"] }
 
 [profile.release]

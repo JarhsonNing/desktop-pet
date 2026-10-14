@@ -1,4 +1,4 @@
-use desktop_pet::content::Payload;
+use crate::content::Payload;
 use std::{path::PathBuf, sync::mpsc};
 
 #[cfg(target_os = "macos")]
@@ -100,12 +100,22 @@ impl Bridge {
         let (_, receiver) = mpsc::channel();
         (Self, Events { receiver })
     }
+    pub fn new_window(
+        _: Option<raw_window_handle::RawWindowHandle>,
+        _: PathBuf,
+        _: bool,
+        _: eframe::egui::Context,
+    ) -> (Self, Events) {
+        let (_, receiver) = mpsc::channel();
+        (Self, Events { receiver })
+    }
     pub fn enabled(&self, _: bool) {}
     pub fn quota(&self, _: u64) {}
     pub fn cancel_receive(&self, _: &str) -> bool {
         false
     }
     pub fn refresh_windows(&mut self) {}
+    pub fn bind_webview(&mut self) {}
     pub fn copy(&mut self, _: &[PathBuf], _: &[Payload]) -> Result<(), String> {
         Err("此平台尚不支持系统剪切板".into())
     }

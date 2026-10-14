@@ -56,6 +56,7 @@ struct Binding {
     panel: bool,
     target: IDropTarget,
     alive: Cell<bool>,
+    subclassed: Cell<bool>,
     drag: RefCell<Option<(Vec<PathBuf>, Vec<Payload>)>>,
 }
 
@@ -78,14 +79,27 @@ impl Bridge {
         directory: PathBuf,
         enabled: bool,
     ) -> (Self, Events) {
+        Self::new_window(
+            creation.window_handle().ok().map(|h| h.as_raw()),
+            directory,
+            enabled,
+            creation.egui_ctx.clone(),
+        )
+    }
+    pub fn new_window(
+        window: Option<RawWindowHandle>,
+        directory: PathBuf,
+        enabled: bool,
+        context: eframe::egui::Context,
+    ) -> (Self, Events) {
         let (sender, receiver) = mpsc::channel();
-        let root = match creation.window_handle().map(|h| h.as_raw()) {
-            Ok(RawWindowHandle::Win32(h)) => HWND(h.hwnd.get() as *mut _),
+        let root = match window {
+            Some(RawWindowHandle::Win32(h)) => HWND(h.hwnd.get() as *mut _),
             _ => HWND::default(),
         };
         let shared = Arc::new(Shared {
             sender,
-            context: creation.egui_ctx.clone(),
+            context,
             directory: directory.join("content/incoming"),
             enabled: AtomicBool::new(enabled),
             alive: AtomicBool::new(true),
@@ -120,12 +134,15 @@ impl Bridge {
         (bridge, Events { receiver })
     }
     fn bind(&mut self, window: HWND, panel: bool) {
+        self.bind_inner(window, panel, true);
+    }
+    fn bind_inner(&mut self, window: HWND, panel: bool, require_subclass: bool) {
         if self.bindings.contains_key(&(window.0 as usize)) {
             return;
         }
         let target: IDropTarget = DropTarget {
             shared: self.shared.clone(),
-            window: window.0 as usize,
+            window: if require_subclass { window } else { self.root }.0 as usize,
             panel,
             accepted: Cell::new(false),
         }
@@ -136,30 +153,62 @@ impl Bridge {
             panel,
             target,
             alive: Cell::new(true),
+            subclassed: Cell::new(false),
             drag: RefCell::new(None),
         });
         unsafe {
             // Windows builder disables winit's CF_HDROP-only target. Revoke also
             // handles previously-created secondary viewports without double delivery.
-            let _ = RevokeDragDrop(window);
-            if let Err(e) = RegisterDragDrop(window, &binding.target) {
-                self.shared
-                    .emit(Event::Error(format!("原生拖放注册失败：{e}")));
+            let revoked = RevokeDragDrop(window);
+            if !require_subclass && revoked == Err(DRAGDROP_E_INVALIDHWND.into()) {
                 return;
             }
-            if !SetWindowSubclass(
+            if let Err(e) = RegisterDragDrop(window, &binding.target) {
+                if require_subclass {
+                    self.shared
+                        .emit(Event::Error(format!("原生拖放注册失败：{e}")));
+                }
+                return;
+            }
+            let subclassed = SetWindowSubclass(
                 window,
                 Some(window_proc),
                 SUBCLASS,
                 (&*binding as *const Binding) as usize,
             )
-            .as_bool()
-            {
+            .as_bool();
+            binding.subclassed.set(subclassed);
+            if !subclassed && require_subclass {
                 let _ = RevokeDragDrop(window);
                 return;
             }
         }
         self.bindings.insert(window.0 as usize, binding);
+    }
+    /// WebView2 registers drop targets on its child HWNDs. Override those too,
+    /// so OLE virtual files reach our bridge instead of navigating the web page.
+    pub fn bind_webview(&mut self) {
+        let mut windows = Vec::<usize>::new();
+        unsafe extern "system" fn children(
+            window: HWND,
+            parameter: LPARAM,
+        ) -> ::windows::core::BOOL {
+            unsafe {
+                (*(parameter.0 as *mut Vec<usize>)).push(window.0 as usize);
+            }
+            true.into()
+        }
+        unsafe {
+            let _ = EnumChildWindows(
+                Some(self.root),
+                Some(children),
+                LPARAM((&mut windows as *mut Vec<usize>) as isize),
+            );
+        }
+        self.bindings.retain(|_, binding| binding.attached());
+        for window in windows {
+            self.bind_inner(HWND(window as *mut _), true, false);
+        }
     }
     pub fn enabled(&self, value: bool) {
         if value != self.shared.enabled.load(Ordering::Acquire) {
@@ -252,7 +301,12 @@ impl Bridge {
         let binding = self
             .bindings
             .get(&(window.0 as usize))
-            .or_else(|| self.bindings.values().find(|b| b.panel))
+            .or_else(|| {
+                self.bindings
+                    .values()
+                    .find(|b| b.panel && b.subclassed.get())
+            })
+            .or_else(|| self.bindings.get(&(self.root.0 as usize)))
             .ok_or("面板原生窗口尚未就绪")?;
         *binding.drag.borrow_mut() = Some((files, payloads));
         unsafe {
@@ -277,7 +331,9 @@ impl Bridge {
             unsafe {
                 if binding.attached() {
                     let _ = RevokeDragDrop(binding.window);
-                    let _ = RemoveWindowSubclass(binding.window, Some(window_proc), SUBCLASS);
+                    if binding.subclassed.get() {
+                        let _ = RemoveWindowSubclass(binding.window, Some(window_proc), SUBCLASS);
+                    }
                 }
             }
         }
@@ -668,10 +724,9 @@ impl IDropTarget_Impl for DropTarget_Impl {
                 &mut local,
             );
         }
-        let scale = self
-            .shared
-            .context
-            .input(|input| input.viewport().native_pixels_per_point.unwrap_or(1.0));
+        let dpi =
+            unsafe { ::windows::Win32::UI::HiDpi::GetDpiForWindow(HWND(self.window as *mut _)) };
+        let scale = dpi.max(96) as f32 / 96.0;
         let position = [local.x as f32 / scale, local.y as f32 / scale];
         if data(object, registered("FileGroupDescriptorW")).is_some() {
             let capability = object
@@ -880,7 +935,7 @@ fn virtual_files(object: &IDataObject, shared: &Shared) -> ::windows::core::Resu
     std::fs::create_dir_all(&shared.directory).map_err(|_| ::windows::core::Error::from_win32())?;
     let id = format!(
         "attachment-{}-{}",
-        desktop_pet::safety::timestamp(),
+        crate::safety::timestamp(),
         NEXT_INCOMING.fetch_add(1, Ordering::Relaxed)
     );
     let directory = shared.directory.join(&id);

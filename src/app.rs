@@ -153,6 +153,9 @@ pub struct PetApp {
     cursor: Option<platform::Cursor>,
     work_areas: Vec<[f32; 4]>,
     exiting: bool,
+    web_panel: Option<crate::panel_host::Panel>,
+    web_page: usize,
+    test_requests: Option<Receiver<desktop_pet::panel_ipc::Request>>,
 }
 
 impl PetApp {
@@ -180,6 +183,10 @@ impl PetApp {
         );
         let nickname = config.name.clone();
         let content = crate::content_panel::ContentPanel::new(creation, directory.clone(), &config);
+        let web_page = options.settings_page;
+        let test_requests = options
+            .control_stdin
+            .then(|| crate::panel_host::test_requests(creation.egui_ctx.clone()));
         Self {
             engine: Engine::new(config, 0.0, safety::timestamp()),
             content,
@@ -214,6 +221,9 @@ impl PetApp {
             cursor: None,
             work_areas: Vec::new(),
             exiting: false,
+            web_panel: None,
+            web_page,
+            test_requests,
         }
     }
 
@@ -251,6 +261,12 @@ impl PetApp {
         match action {
             ShellAction::Settings => {
                 self.settings = true;
+                if let Some(panel) = &self.web_panel {
+                    panel.send(desktop_pet::panel_ipc::Message::event(
+                        "focus",
+                        serde_json::Value::Null,
+                    ));
+                }
                 context.send_viewport_cmd_to(
                     ViewportId::from_hash_of("settings"),
                     ViewportCommand::Focus,
@@ -260,10 +276,22 @@ impl PetApp {
             ShellAction::Clipboard => {
                 self.settings = true;
                 self.tab = 4;
+                if let Some(panel) = &self.web_panel {
+                    panel.send(desktop_pet::panel_ipc::Message::event(
+                        "navigate",
+                        serde_json::json!({"page":4}),
+                    ));
+                }
             }
             ShellAction::Transfer => {
                 self.settings = true;
                 self.tab = 5;
+                if let Some(panel) = &self.web_panel {
+                    panel.send(desktop_pet::panel_ipc::Message::event(
+                        "navigate",
+                        serde_json::json!({"page":5}),
+                    ));
+                }
             }
             ShellAction::ToggleClipboard => {
                 self.engine.config.clipboard_enabled = !self.engine.config.clipboard_enabled;
@@ -292,6 +320,37 @@ impl PetApp {
         if !self.settings {
             return;
         }
+        if !self.options.legacy_panel {
+            if self.web_panel.is_none() {
+                match crate::panel_host::Panel::launch(
+                    &self.directory,
+                    self.tab,
+                    self.options.panel_binary.as_deref(),
+                    self.options.panel_debug_port,
+                    self.options.screenshot.as_deref(),
+                    context.clone(),
+                ) {
+                    Ok(panel) => {
+                        self.content.attach_panel(panel.sender());
+                        self.web_page = self.tab;
+                        self.web_panel = Some(panel);
+                    }
+                    Err(error) => {
+                        eprintln!("Mochi: {error}");
+                        self.status = Some(error);
+                        self.settings = false;
+                        self.engine
+                            .say("面板暂时打不开，请检查安装文件。", Mood::Idle, now, 8.0);
+                    }
+                }
+            } else if self.web_page != self.tab {
+                self.web_page = self.tab;
+                if let Some(panel) = &self.web_panel {
+                    panel.send(desktop_pet::panel_ipc::Message::event("navigate", serde_json::json!({"page":self.tab,"selected":self.content.web_selection()})));
+                }
+            }
+            return;
+        }
         if self.options.screenshot.is_some() {
             self.panel_contents(context, now);
             return;
@@ -305,6 +364,239 @@ impl PetApp {
                 .with_min_inner_size([820.0, 620.0]),
             |context, _class| self.panel_contents(context, now),
         );
+    }
+
+    fn poll_web_panel(&mut self, context: &egui::Context, now: f64) {
+        if self.web_panel.as_mut().is_some_and(|panel| panel.exited()) {
+            let reopen =
+                self.settings && self.web_panel.as_ref().is_some_and(|panel| panel.closing);
+            self.content.detach_panel();
+            self.web_panel.take();
+            self.settings = reopen;
+        }
+        let requests = self
+            .web_panel
+            .as_ref()
+            .map(|panel| panel.requests.try_iter().collect::<Vec<_>>())
+            .unwrap_or_default();
+        for request in requests {
+            let result = self.web_command(context, now, &request);
+            if let Some(panel) = &self.web_panel {
+                match result {
+                    Ok(Some(value)) => {
+                        panel.send(desktop_pet::panel_ipc::Message::result(request.id, value))
+                    }
+                    Ok(None) => {}
+                    Err(error) => {
+                        panel.send(desktop_pet::panel_ipc::Message::error(request.id, error))
+                    }
+                }
+            }
+        }
+        let tests = self
+            .test_requests
+            .as_ref()
+            .map(|receiver| receiver.try_iter().collect::<Vec<_>>())
+            .unwrap_or_default();
+        for request in tests {
+            let message = match self.web_command(context, now, &request) {
+                Ok(Some(value)) => desktop_pet::panel_ipc::Message::result(request.id, value),
+                Ok(None) => {
+                    desktop_pet::panel_ipc::Message::result(request.id, serde_json::Value::Null)
+                }
+                Err(error) => desktop_pet::panel_ipc::Message::error(request.id, error),
+            };
+            if let Ok(line) = serde_json::to_string(&message) {
+                println!("{line}");
+            }
+        }
+    }
+
+    fn web_command(
+        &mut self,
+        context: &egui::Context,
+        now: f64,
+        request: &desktop_pet::panel_ipc::Request,
+    ) -> Result<Option<serde_json::Value>, String> {
+        use serde_json::json;
+        let args = &request.args;
+        let value = match request.command.as_str() {
+            "open_panel" => {
+                self.settings = true;
+                self.tab = args["page"].as_u64().unwrap_or(self.tab as u64).min(5) as usize;
+                json!(true)
+            }
+            "close_panel" => {
+                if let Some(panel) = &self.web_panel {
+                    panel.send(desktop_pet::panel_ipc::Message::event(
+                        "shutdown",
+                        serde_json::Value::Null,
+                    ));
+                }
+                self.settings = false;
+                json!(true)
+            }
+            "panel_closing" => {
+                if let Some(panel) = &mut self.web_panel {
+                    panel.closing = true;
+                }
+                self.settings = false;
+                json!(true)
+            }
+            "snapshot" => json!({
+                "config":self.engine.config,"mood":format!("{:?}",self.engine.mood),"quiet":self.engine.quiet(now),
+                "busy_seconds":(self.engine.quiet_until-now).max(0.0) as u64,"hidden":self.engine.hidden,"journal":self.engine.history,
+                "skin":self.skin.skin.manifest,"skin_path":self.skin_path,"status":self.status,"content":self.content.web_snapshot(),
+                "page":self.tab,"data_dir":self.directory,"platform":std::env::consts::OS,"version":env!("CARGO_PKG_VERSION")
+            }),
+            "skin_preview" => json!(self.skin.skin.preview_svg().map_err(|e| e.to_string())?),
+            "page" => {
+                self.tab = args["page"].as_u64().unwrap_or(0).min(5) as usize;
+                self.web_page = self.tab;
+                json!(true)
+            }
+            "update_config" => {
+                let patch = args.as_object().ok_or("设置必须为对象")?;
+                let mut value =
+                    serde_json::to_value(&self.engine.config).map_err(|e| e.to_string())?;
+                for (key, setting) in patch {
+                    if !matches!(
+                        key.as_str(),
+                        "name"
+                            | "level"
+                            | "allow_cursor_chase"
+                            | "quiet"
+                            | "roaming"
+                            | "low_power"
+                            | "scale"
+                            | "neglect_seconds"
+                            | "icon_hide_seconds"
+                            | "clipboard_enabled"
+                            | "clipboard_days"
+                            | "clipboard_limit"
+                            | "content_quota_gib"
+                            | "download_dropped_resources"
+                            | "allow_hide_icons"
+                    ) {
+                        return Err(format!("不可修改的设置：{key}"));
+                    }
+                    if key == "allow_hide_icons"
+                        && setting.as_bool() == Some(true)
+                        && !self.engine.config.allow_hide_icons
+                    {
+                        return Err("请先确认桌面图标捉迷藏授权".into());
+                    }
+                    value[key] = setting.clone();
+                }
+                let mut config: config::Config =
+                    serde_json::from_value(value).map_err(|e| e.to_string())?;
+                config.name = config.name.trim().to_owned();
+                config.sanitize();
+                let restore = self.engine.hidden
+                    && (!config.allow_hide_icons
+                        || config.quiet
+                        || config.level != MischiefLevel::Devil);
+                self.engine.config = config;
+                self.nickname = self.engine.config.name.clone();
+                self.engine.dirty = true;
+                self.engine.last_interaction = now;
+                self.engine.stage = 0;
+                self.content.configure(&self.engine.config);
+                if restore {
+                    self.effect(Effect::RestoreIcons);
+                    self.engine.hidden = false;
+                }
+                json!(self.engine.config)
+            }
+            "consent_icons" => {
+                if args["acknowledged"].as_bool() != Some(true) {
+                    return Err("需要确认桌面图标隐藏的影响".into());
+                }
+                self.engine.config.hide_icons_consent_version = 1;
+                self.engine.config.allow_hide_icons = true;
+                self.engine.dirty = true;
+                json!(true)
+            }
+            "interact" => {
+                let interaction = match args["action"].as_str().ok_or("Missing action")? {
+                    "pet" => Interaction::Pet,
+                    "poke" => Interaction::Poke,
+                    "feed" => Interaction::Feed,
+                    "play" => Interaction::Play,
+                    "busy" => Interaction::Busy,
+                    "wake" => Interaction::Wake,
+                    "home" => {
+                        self.move_to = Some(self.home);
+                        Interaction::Busy
+                    }
+                    "chase" => {
+                        if !self.engine.config.allow_cursor_chase || self.engine.quiet(now) {
+                            return Err("请先允许光标追逐并关闭安静模式".into());
+                        }
+                        self.engine.say("别看那里，看我！", Mood::Chase, now, 10.0);
+                        return Ok(Some(json!(true)));
+                    }
+                    "hide" => {
+                        if !self.engine.config.allow_hide_icons
+                            || self.engine.config.level != MischiefLevel::Devil
+                            || self.engine.hidden
+                            || self.engine.quiet(now)
+                        {
+                            return Err(
+                                "图标捉迷藏需要单独授权、小恶魔模式且当前不在忙碌或安静状态".into(),
+                            );
+                        }
+                        self.engine.begin_hide(now);
+                        self.effect(Effect::HideIcons);
+                        return Ok(Some(json!(true)));
+                    }
+                    _ => return Err("未知互动".into()),
+                };
+                self.action(interaction, now);
+                json!(true)
+            }
+            "restore" => {
+                self.restore(now);
+                json!(true)
+            }
+            "load_skin" => {
+                let path = PathBuf::from(args["path"].as_str().ok_or("Missing skin path")?);
+                let _ = skin::load(&path).map_err(|e| e.to_string())?;
+                self.load_skin(context, &path);
+                json!(self.skin.skin.manifest)
+            }
+            "reload_skin" => {
+                let path = self.engine.config.skin.clone().ok_or("当前为内置皮肤")?;
+                let _ = skin::load(&path).map_err(|e| e.to_string())?;
+                self.load_skin(context, &path);
+                json!(self.skin.skin.manifest)
+            }
+            "default_skin" => {
+                self.skin = SkinRenderer::new(Skin::builtin(), context);
+                self.engine.config.skin = None;
+                self.skin_path.clear();
+                self.engine.dirty = true;
+                self.next_cursor_poll = 0.0;
+                json!(self.skin.skin.manifest)
+            }
+            "captured" => {
+                self.screenshot_done = true;
+                self.options.capture_ok.store(true, Ordering::Release);
+                json!(true)
+            }
+            "quit" => {
+                self.request_exit(context, now);
+                return Ok(None);
+            }
+            _ => {
+                if self.content.web_command(request)? {
+                    json!(true)
+                } else {
+                    return Ok(None);
+                }
+            }
+        };
+        Ok(Some(value))
     }
 
     fn panel_contents(&mut self, context: &egui::Context, now: f64) {
@@ -1222,7 +1514,17 @@ impl PetApp {
                         self.tab = 5;
                         if let Some((id, _, _)) = &self.content.notification {
                             let id = id.clone();
-                            self.content.select(&id);
+                            if self.options.legacy_panel {
+                                self.content.select(&id);
+                            } else {
+                                self.content.select_web(&id);
+                                if let Some(panel) = &self.web_panel {
+                                    panel.send(desktop_pet::panel_ipc::Message::event(
+                                        "navigate",
+                                        serde_json::json!({"page":5,"selected":[id]}),
+                                    ));
+                                }
+                            }
                         }
                     }
                     if self.engine.hidden {
@@ -1306,6 +1608,8 @@ impl PetApp {
         // Restore the desktop before joining clipboard or file I/O workers.
         self.content.bridge.stop();
         self.content.service.stop();
+        self.content.detach_panel();
+        self.web_panel.take();
         self.save();
     }
 
@@ -1324,6 +1628,7 @@ impl Drop for PetApp {
 impl eframe::App for PetApp {
     fn update(&mut self, context: &egui::Context, _frame: &mut eframe::Frame) {
         let now = self.started.elapsed().as_secs_f64();
+        self.poll_web_panel(context, now);
         if self.exiting || context.input(|input| input.viewport().close_requested()) {
             self.request_exit(context, now);
             return;
@@ -1356,7 +1661,7 @@ impl eframe::App for PetApp {
             }
         }
         self.dropped_skin(context);
-        if !self.shell_initialized && self.options.screenshot.is_none() {
+        if !self.shell_initialized && self.options.screenshot.is_none() && !self.options.no_shell {
             self.shell_initialized = true;
             match Shell::new(context.clone()) {
                 Ok(shell) => self.shell = Some(shell),

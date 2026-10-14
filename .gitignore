@@ -4,4 +4,7 @@
 .DS_Store
 *.log
 __pycache__/
+/panel/node_modules/
+/panel/dist/
+/panel/src-tauri/gen/
 

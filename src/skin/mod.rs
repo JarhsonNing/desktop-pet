@@ -1,5 +1,6 @@
 mod definition;
 mod package;
+mod preview;
 mod render;
 
 pub use definition::*;

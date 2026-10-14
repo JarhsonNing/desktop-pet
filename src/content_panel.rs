@@ -2,6 +2,7 @@ use crate::{
     native_content::{self, Bridge},
     panel,
 };
+use desktop_pet::panel_ipc::{Message, Request};
 use desktop_pet::{
     config::Config,
     content::{self, Entry, Event, Item, Payload, Service, Snapshot, Source, State},
@@ -10,6 +11,7 @@ use eframe::egui::{self, RichText, Vec2};
 use std::{
     collections::{BTreeSet, HashMap},
     path::PathBuf,
+    sync::mpsc::Sender,
 };
 
 pub struct Drop {
@@ -18,6 +20,11 @@ pub struct Drop {
     pub position: [f32; 2],
 }
 enum Operation {
+    Copy,
+    Save(PathBuf),
+}
+enum WebOperation {
+    Prepare,
     Copy,
     Save(PathBuf),
 }
@@ -54,6 +61,10 @@ pub struct ContentPanel {
     message: Option<String>,
     confirm_clear: bool,
     windows_at: f64,
+    web_sender: Option<Sender<Message>>,
+    web_pending: HashMap<String, Vec<u64>>,
+    web_exports: HashMap<String, Vec<(u64, WebOperation)>>,
+    web_receivers: BTreeSet<String>,
 }
 impl ContentPanel {
     pub fn new(
@@ -94,6 +105,10 @@ impl ContentPanel {
             message: None,
             confirm_clear: false,
             windows_at: 0.0,
+            web_sender: None,
+            web_pending: HashMap::new(),
+            web_exports: HashMap::new(),
+            web_receivers: BTreeSet::new(),
         }
     }
     pub fn poll(&mut self, context: &egui::Context, now: f64) -> Vec<Drop> {
@@ -188,6 +203,37 @@ impl ContentPanel {
                     files,
                     payloads,
                 } => {
+                    if let Some(operations) = self.web_exports.remove(&id) {
+                        for (request, operation) in operations {
+                            match operation {
+                                WebOperation::Prepare => self.web_reply(Message::result(
+                                    request,
+                                    serde_json::json!({"files":files,"payloads":payloads}),
+                                )),
+                                WebOperation::Copy => match self.bridge.copy(&files, &payloads) {
+                                    Ok(()) => {
+                                        self.clipboard_lease =
+                                            native_content::clipboard_uses_files(&payloads);
+                                        if self.clipboard_lease {
+                                            self.service.protect_exports(files.clone());
+                                        }
+                                        self.web_reply(Message::result(
+                                            request,
+                                            serde_json::json!({"copied":true}),
+                                        ));
+                                    }
+                                    Err(error) => self.web_reply(Message::error(request, error)),
+                                },
+                                WebOperation::Save(directory) => {
+                                    self.service.save_exports(files.clone(), directory);
+                                    self.web_reply(Message::result(
+                                        request,
+                                        serde_json::json!({"saving":true}),
+                                    ));
+                                }
+                            }
+                        }
+                    }
                     if id != self.key() {
                         continue;
                     }
@@ -207,12 +253,30 @@ impl ContentPanel {
                     query,
                     entries,
                 } => {
+                    if let Some(requests) = self
+                        .web_pending
+                        .remove(&format!("search:{source:?}:{query}"))
+                    {
+                        for request in requests {
+                            self.web_reply(Message::result(request, serde_json::json!(entries)));
+                        }
+                    }
                     let i = index(source);
                     if self.queries[i] == query {
                         self.results[i] = Some(entries);
                     }
                 }
                 Event::Error(error) => {
+                    for (_, requests) in std::mem::take(&mut self.web_pending) {
+                        for request in requests {
+                            self.web_reply(Message::error(request, &error));
+                        }
+                    }
+                    for (_, requests) in std::mem::take(&mut self.web_exports) {
+                        for (request, _) in requests {
+                            self.web_reply(Message::error(request, &error));
+                        }
+                    }
                     self.message = Some(error);
                     self.preparing = false;
                     self.operation = None;
@@ -228,10 +292,161 @@ impl ContentPanel {
                     self.service.completed(&id);
                     self.progress.remove(&id);
                 }
+                Event::WebPreview { id, text, image } => {
+                    if let Some(requests) = self.web_pending.remove(&format!("preview:{id}")) {
+                        for request in requests {
+                            self.web_reply(Message::result(
+                                request,
+                                serde_json::json!({"text":text,"image":image}),
+                            ));
+                        }
+                    }
+                }
                 _ => {}
             }
         }
         drops
+    }
+    pub fn attach_panel(&mut self, sender: Sender<Message>) {
+        self.web_sender = Some(sender);
+    }
+    pub fn detach_panel(&mut self) {
+        self.web_sender = None;
+        self.web_pending.clear();
+        self.web_exports.clear();
+        for id in std::mem::take(&mut self.web_receivers) {
+            self.progress.remove(&id);
+            self.message = Some("面板已关闭，未完成的附件接收已取消。".into());
+        }
+        self.receiving = false;
+        self.dragging = false;
+        if !self.clipboard_lease {
+            self.service.release_exports();
+        }
+    }
+    fn web_reply(&self, message: Message) {
+        if let Some(sender) = &self.web_sender {
+            let _ = sender.send(message);
+        }
+    }
+    pub fn web_selection(&self) -> Vec<String> {
+        self.selection.iter().cloned().collect()
+    }
+    pub fn select_web(&mut self, id: &str) {
+        self.selection.clear();
+        self.selection.insert(id.into());
+    }
+    pub fn web_snapshot(&self) -> serde_json::Value {
+        serde_json::json!({"records":self.snapshot,"progress":self.progress,"access":self.access,"message":self.message,"selected":self.web_selection()})
+    }
+    pub fn web_command(&mut self, request: &Request) -> Result<bool, String> {
+        let args = &request.args;
+        let ids = || -> Result<Vec<String>, String> {
+            let ids: Vec<String> =
+                serde_json::from_value(args["ids"].clone()).map_err(|e| e.to_string())?;
+            if ids.is_empty() {
+                return Err("请先选择记录".into());
+            }
+            Ok(ids)
+        };
+        match request.command.as_str() {
+            "preview" => {
+                let id = args["id"].as_str().ok_or("Missing record id")?;
+                self.web_pending
+                    .entry(format!("preview:{id}"))
+                    .or_default()
+                    .push(request.id);
+                self.service.preview_web(id);
+                return Ok(false);
+            }
+            "search" => {
+                let source = if args["source"] == "Clipboard" {
+                    Source::Clipboard
+                } else {
+                    Source::Transfer
+                };
+                let query = args["query"].as_str().unwrap_or("");
+                self.web_pending
+                    .entry(format!("search:{source:?}:{query}"))
+                    .or_default()
+                    .push(request.id);
+                self.service.search(source, query);
+                return Ok(false);
+            }
+            "prepare" | "copy" | "save_content" => {
+                let ids = ids()?;
+                let key = ids.join("|");
+                let operation = match request.command.as_str() {
+                    "copy" => WebOperation::Copy,
+                    "save_content" => WebOperation::Save(PathBuf::from(
+                        args["directory"].as_str().ok_or("Missing destination")?,
+                    )),
+                    _ => WebOperation::Prepare,
+                };
+                self.web_exports
+                    .entry(key)
+                    .or_default()
+                    .push((request.id, operation));
+                self.service.export(ids);
+                return Ok(false);
+            }
+            "favorite" => {
+                for id in ids()? {
+                    self.service
+                        .favorite(&id, args["value"].as_bool().unwrap_or(true));
+                }
+            }
+            "delete" => self.service.delete(ids()?),
+            "clear_clipboard" => self.service.clear_clipboard(),
+            "collect" => {
+                for id in ids()? {
+                    self.service.collect(&id);
+                }
+            }
+            "import" => {
+                let payloads: Vec<Payload> =
+                    serde_json::from_value(args["payloads"].clone()).map_err(|e| e.to_string())?;
+                self.receive(payloads);
+            }
+            "cancel" => {
+                let id = args["id"].as_str().ok_or("Missing task id")?;
+                if !self.bridge.cancel_receive(id) {
+                    self.service.cancel(id);
+                }
+            }
+            "drag_start" => {
+                let files: Vec<PathBuf> =
+                    serde_json::from_value(args["files"].clone()).map_err(|e| e.to_string())?;
+                self.dragging = true;
+                self.service.protect_exports(files);
+            }
+            "drag_finish" => {
+                self.dragging = false;
+                if !self.clipboard_lease {
+                    self.service.release_exports();
+                }
+            }
+            "drop_hover" => self.receiving = args["value"].as_bool().unwrap_or(false),
+            "receiving" => {
+                let id = args["id"].as_str().ok_or("Missing task id")?;
+                self.web_receivers.insert(id.into());
+                self.progress.insert(
+                    id.into(),
+                    (
+                        args["label"].as_str().unwrap_or("正在接收附件").into(),
+                        args["bytes"].as_u64().unwrap_or(0),
+                    ),
+                );
+            }
+            "receive_finished" => {
+                if let Some(id) = args["id"].as_str() {
+                    self.web_receivers.remove(id);
+                    self.progress.remove(id);
+                }
+            }
+            _ => return Err(format!("未知内容命令：{}", request.command)),
+        }
+        Ok(true)
     }
     pub fn configure(&mut self, config: &Config) {
         self.bridge.enabled(config.clipboard_enabled);

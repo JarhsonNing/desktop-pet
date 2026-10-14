@@ -113,9 +113,22 @@ impl Bridge {
         directory: PathBuf,
         enabled: bool,
     ) -> (Self, Events) {
+        Self::new_window(
+            creation.window_handle().ok().map(|h| h.as_raw()),
+            directory,
+            enabled,
+            creation.egui_ctx.clone(),
+        )
+    }
+    pub fn new_window(
+        window: Option<RawWindowHandle>,
+        directory: PathBuf,
+        enabled: bool,
+        context: eframe::egui::Context,
+    ) -> (Self, Events) {
         let (sender, receiver) = mpsc::channel();
-        let root = match creation.window_handle().map(|h| h.as_raw()) {
-            Ok(RawWindowHandle::AppKit(h)) => unsafe {
+        let root = match window {
+            Some(RawWindowHandle::AppKit(h)) => unsafe {
                 let view = &*(h.ns_view.as_ptr() as *const NSView);
                 view.window()
             },
@@ -123,7 +136,7 @@ impl Bridge {
         };
         let shared = Arc::new(Shared {
             sender,
-            context: creation.egui_ctx.clone(),
+            context,
             directory: directory.join("content/incoming"),
             alive: AtomicBool::new(true),
             quota: AtomicU64::new(5 * 1024 * 1024 * 1024),
@@ -206,6 +219,17 @@ impl Bridge {
             {
                 self.bind(window, true);
             }
+        }
+    }
+    pub fn bind_webview(&mut self) {
+        fn unregister(view: &NSView) {
+            view.unregisterDraggedTypes();
+            for child in view.subviews() {
+                unregister(&child);
+            }
+        }
+        if let Some(view) = self.root.as_ref().and_then(|window| window.contentView()) {
+            unregister(&view);
         }
     }
     pub fn enabled(&self, value: bool) {
@@ -514,7 +538,7 @@ fn receive_promises(
     }
     let directory = shared.directory.join(format!(
         "promise-{}-{}",
-        desktop_pet::safety::timestamp(),
+        crate::safety::timestamp(),
         NEXT_INCOMING.fetch_add(1, Ordering::Relaxed)
     ));
     if let Err(e) = std::fs::create_dir_all(&directory) {

@@ -18,14 +18,14 @@ pub enum Source {
     Transfer,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Payload {
     Text {
         plain: String,
         html: Option<Vec<u8>>,
         rtf: Option<Vec<u8>>,
     },
-    Image(Vec<u8>),
+    Image(#[serde(with = "bytes_base64")] Vec<u8>),
     Files(Vec<PathBuf>),
     // Native promises are materialized into this owned temporary directory.
     TemporaryFiles {
@@ -38,6 +38,20 @@ pub enum Payload {
         name: Option<String>,
     },
     Error(String),
+}
+
+mod bytes_base64 {
+    use base64::Engine;
+    use serde::{Deserialize, Deserializer, Serializer};
+    pub fn serialize<S: Serializer>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&base64::engine::general_purpose::STANDARD.encode(bytes))
+    }
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<u8>, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        base64::engine::general_purpose::STANDARD
+            .decode(value)
+            .map_err(serde::de::Error::custom)
+    }
 }
 
 impl Payload {
@@ -129,7 +143,7 @@ impl Default for Policy {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Snapshot {
     pub clipboard: Vec<Entry>,
     pub transfer: Vec<Entry>,
@@ -154,6 +168,11 @@ pub enum Event {
         id: String,
         text: Option<String>,
         image: Option<(Vec<u8>, u32, u32)>,
+    },
+    WebPreview {
+        id: String,
+        text: Option<String>,
+        image: Option<String>,
     },
     Exported {
         id: String,
@@ -189,6 +208,7 @@ enum Command {
     Delete(Vec<String>),
     ClearClipboard,
     Preview(String),
+    PreviewWeb(String),
     Export(Vec<String>, Arc<AtomicBool>),
     Save(Vec<PathBuf>, PathBuf, Arc<AtomicBool>),
     ReleaseExports,
@@ -263,7 +283,10 @@ impl Service {
                 if matches!(&command, Command::Stop) {
                     break;
                 }
-                let refresh_after = !matches!(&command, Command::Search(..) | Command::Preview(..));
+                let refresh_after = !matches!(
+                    &command,
+                    Command::Search(..) | Command::Preview(..) | Command::PreviewWeb(..)
+                );
                 let task_id = match &command {
                     Command::Import { id, .. } => Some(id.clone()),
                     Command::Collect { task_id, .. } => Some(task_id.clone()),
@@ -312,6 +335,24 @@ impl Service {
                         Command::Preview(id) => {
                             let (text, image) = store.preview(&id)?;
                             emit(Event::Preview { id, text, image });
+                        }
+                        Command::PreviewWeb(id) => {
+                            use base64::Engine;
+                            let (text, image) = store.preview(&id)?;
+                            let image = image
+                                .map(|(rgba, width, height)| {
+                                    let image = image::RgbaImage::from_raw(width, height, rgba)
+                                        .ok_or("Invalid preview pixels")?;
+                                    let mut png = std::io::Cursor::new(Vec::new());
+                                    image.write_to(&mut png, image::ImageFormat::Png)?;
+                                    Ok::<_, Box<dyn std::error::Error>>(format!(
+                                        "data:image/png;base64,{}",
+                                        base64::engine::general_purpose::STANDARD
+                                            .encode(png.into_inner())
+                                    ))
+                                })
+                                .transpose()?;
+                            emit(Event::WebPreview { id, text, image });
                         }
                         Command::Export(ids, cancel) => {
                             let mut progress = progress_callback(ids.join("|"), &emit);
@@ -422,6 +463,9 @@ impl Service {
     }
     pub fn preview(&self, id: &str) {
         let _ = self.sender.send(Command::Preview(id.into()));
+    }
+    pub fn preview_web(&self, id: &str) {
+        let _ = self.sender.send(Command::PreviewWeb(id.into()));
     }
     pub fn export(&mut self, ids: Vec<String>) {
         let key = ids.join("|");

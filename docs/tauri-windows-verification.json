@@ -1,0 +1,175 @@
+{
+  "date": "2026-10-14",
+  "platform": "Windows 10 Pro 19045 / i7-12700 / 20 logical CPUs / WebView2 154",
+  "rust_tests": {
+    "release_workspace_passed": 62,
+    "clippy_all_targets": "passed",
+    "fmt": "passed"
+  },
+  "frontend": {
+    "vue_typescript_build": "passed",
+    "npm_audit_vulnerabilities": 0
+  },
+  "native_ui": {
+    "passed": true,
+    "checks": [
+      "真实 Tauri 窗口与六页导航",
+      "昵称中文输入与配置持久化",
+      "宠物互动调用原生引擎",
+      "单独授权提示保持安全默认值",
+      "剪切板全文搜索与原生导出准备",
+      "中转站大图与收藏",
+      "皮肤重载接口与独立接收区域",
+      "系统窗口关闭保存昵称草稿",
+      "窗口关闭后宠物继续运行"
+    ],
+    "screenshots": [
+      "control-panel.png",
+      "preferences-panel.png",
+      "skin-panel.png",
+      "clipboard-panel.png",
+      "transfer-panel.png"
+    ]
+  },
+  "baseline": {
+    "revision": "2c89a93",
+    "benchmark_patch": "tray/hotkeys disabled in isolated source; renderer unchanged",
+    "measurement": {
+      "passed": true,
+      "skin": "builtin",
+      "mischief": "Calm",
+      "samples": [
+        {
+          "label": "never_opened",
+          "duration": 30.046999999991385,
+          "one_core_cpu_percent": 0.36401304622768116,
+          "system_cpu_percent": 0.01820065231138406,
+          "rss_mib": 77.66380208333334,
+          "private_mib": 95.234765625,
+          "panel_processes": []
+        }
+      ],
+      "cycles": []
+    }
+  },
+  "vector": {
+    "passed": true,
+    "skin": "builtin",
+    "mischief": "Calm",
+    "samples": [
+      {
+        "label": "never_opened",
+        "duration": 30.046999999991385,
+        "one_core_cpu_percent": 1.7160615036447824,
+        "system_cpu_percent": 0.08580307518223912,
+        "rss_mib": 78.18997395833334,
+        "private_mib": 95.20078125,
+        "panel_processes": []
+      },
+      {
+        "label": "after_three_closes",
+        "duration": 30.10899999999674,
+        "one_core_cpu_percent": 0.8822112989472543,
+        "system_cpu_percent": 0.044110564947362714,
+        "rss_mib": 75.54895833333333,
+        "private_mib": 94.66015625,
+        "panel_processes": []
+      }
+    ],
+    "cycles": [
+      {
+        "cycle": 1,
+        "released": true,
+        "pet_alive": true
+      },
+      {
+        "cycle": 2,
+        "released": true,
+        "pet_alive": true
+      },
+      {
+        "cycle": 3,
+        "released": true,
+        "pet_alive": true
+      }
+    ],
+    "rss_delta_mib": -2.6410156250000085,
+    "private_delta_mib": -0.5406250000000057,
+    "cpu_delta_one_core_percent": -0.8338502046975281
+  },
+  "png_174_frames": {
+    "passed": true,
+    "skin": "dist/skins/orange-hood-girl-smooth-dizzy-v2.mochi",
+    "mischief": "Calm",
+    "samples": [
+      {
+        "label": "never_opened",
+        "duration": 12.01500000001397,
+        "one_core_cpu_percent": 0.7802746566782438,
+        "system_cpu_percent": 0.03901373283391219,
+        "rss_mib": 184.25651041666666,
+        "private_mib": 247.01041666666666,
+        "panel_processes": []
+      },
+      {
+        "label": "after_three_closes",
+        "duration": 12.030999999988126,
+        "one_core_cpu_percent": 1.688346770843658,
+        "system_cpu_percent": 0.08441733854218289,
+        "rss_mib": 183.9619140625,
+        "private_mib": 246.0078125,
+        "panel_processes": []
+      }
+    ],
+    "cycles": [
+      {
+        "cycle": 1,
+        "released": true,
+        "pet_alive": true
+      },
+      {
+        "cycle": 2,
+        "released": true,
+        "pet_alive": true
+      },
+      {
+        "cycle": 3,
+        "released": true,
+        "pet_alive": true
+      }
+    ],
+    "rss_delta_mib": -0.2945963541666572,
+    "private_delta_mib": -1.0026041666666572,
+    "cpu_delta_one_core_percent": 0.9080721141654141
+  },
+  "packaged_smoke": {
+    "passed": true,
+    "panel_renderer": "tauri",
+    "capture_exit_code": 0,
+    "screenshot_size": [
+      1400,
+      989
+    ],
+    "pet_exit_code": 0
+  },
+  "package": {
+    "passed": true,
+    "files": [
+      {
+        "name": "Mochi.exe",
+        "sha256": "4db371683a28ac91465be4cf0a2234ac411ef303668f0e40c5e231c832689e7d"
+      },
+      {
+        "name": "desktop-pet-panel.exe",
+        "sha256": "c18023867868aa70b1306eb9d9efa96f3d3bd2c45c1541a25f6ca03e5e9a5c41"
+      }
+    ],
+    "archive": "Mochi-0.1.0-tauri-x86_64-pc-windows-msvc.zip"
+  },
+  "limitations": [
+    "CPU samples are short and variable; do not imply identical CPU costs or a long-term guarantee.",
+    "Cross-application drag/drop compatibility requires manual acceptance.",
+    "macOS checks paused as requested; existing macOS smoke uses the legacy egui panel.",
+    "WebView2 emitted Chrome_WidgetWin_0 unregister diagnostic 1412 at shutdown; all tested panel/WebView processes nevertheless exited."
+  ]
+}

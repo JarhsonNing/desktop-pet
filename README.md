@@ -1,6 +1,6 @@
 # 麻薯 Mochi
 
-**住在桌面的小麻烦。** 一只会撒娇、装死、争宠，也知道什么时候该安静的原生桌宠。支持 Windows 和 macOS，无 Electron、无浏览器内核、无账号、无云服务。
+**住在桌面的小麻烦。** 一只会撒娇、装死、争宠，也知道什么时候该安静的原生桌宠。宠物使用 Rust + egui；控制面板使用 Tauri 2 + Vue 3，按需启动，关闭后释放 WebView。无账号、无云服务。本次面板迁移已验证 Windows，macOS 验证暂缓。
 
 ![控制面板](docs/control-panel.png)
 
@@ -31,7 +31,9 @@
 
 Windows 需要支持 OpenGL 2.0 或更新版本的显卡驱动。只有系统基础显示驱动的虚拟机 / 远程桌面环境可能无法启动；请安装设备厂商的驱动，或自行配置可信的 Mesa 软件渲染。安装包不内置大型软件渲染运行时。
 
-首次启动会打开控制面板。之后右键宠物、点击托盘菜单或按 `Ctrl+Alt+Shift+M` 打开面板（macOS 的 Alt 为 Option）。
+Windows 面板依赖 Microsoft Edge WebView2 Runtime（大多数 Windows 10 / 11 已安装）。解压后保留 `Mochi.exe` 与 `desktop-pet-panel.exe` 在同一目录，面板资源和字体已内嵌，不需启动前端服务器。
+
+首次启动会打开控制面板。之后右键宠物、点击托盘菜单或按 `Ctrl+Alt+Shift+M` 打开面板（macOS 的 Alt 为 Option）。关闭面板会退出面板进程，宠物和剪切板记录继续运行；再次打开时重新创建面板。
 
 | 操作 | 快捷键 / 入口 |
 | --- | --- |
@@ -47,19 +49,22 @@ macOS 没有在本项目中使用稳定公开的“隐藏桌面图标”窗口 A
 
 ## 开发
 
-安装 Rust stable 和平台工具链：Windows 需要 Visual Studio C++ Build Tools；macOS 需要 Xcode Command Line Tools。
+安装 Rust stable、Node.js 24 和平台工具链：Windows 需要 Visual Studio C++ Build Tools 与 WebView2 Runtime；macOS 需要 Xcode Command Line Tools。
 
 ```sh
 git clone https://github.com/JarhsonNing/desktop-pet.git
 cd desktop-pet
+npm --prefix panel ci
+npm --prefix panel run build
+cargo build --locked --workspace
 cargo run -- --settings
-cargo test --locked
-cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked --workspace
+cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
-cargo build --locked --release
+cargo build --locked --release --workspace
 ```
 
-正常构建不需要 Node.js、Python 或下载字体，中文字体已内嵌。Python 3.11+ 仅用于打包或重新生成字体；重新生成字体需安装 `fonttools`，执行 `python scripts/prepare_font.py`。字体保留 Noto Sans CJK SC 的完整 Unicode 字符覆盖（44,810 个字符），包括简繁体和部分扩展区汉字；生成脚本仅移除界面不需要的区域及竖排替代字形。
+Node.js 仅用于构建面板，发布包运行不需要 Node.js 或 Python。中文字体已内嵌。Python 3.11+ 用于打包或重新生成字体；重新生成字体需安装 `fonttools`，执行 `python scripts/prepare_font.py`。字体保留 Noto Sans CJK SC 的完整 Unicode 字符覆盖（44,810 个字符），包括简繁体和部分扩展区汉字；生成脚本仅移除界面不需要的区域及竖排替代字形。
 
 ```sh
 cargo run -- --simulate
@@ -90,7 +95,7 @@ cargo run -- --unpack-skin dist/my-skin.mochi --output dist/my-skin-source
 
 ## 资源策略
 
-Rust + egui/eframe + Glow 原生渲染；关闭 vsync 和持续渲染，按事件与状态唤醒：矢量待机 2 FPS、矢量活跃 12 FPS；多帧 PNG 根据当前状态的播放速度提高重绘频率，最高 30 FPS；安静 1 FPS，节能模式 4 FPS。仅在收纳远程资源时下载，无上传；远程下载可关闭。没有后台 AI、后台截图、视频解码或整套 WebView。控制面板使用侧边导航、卡片布局和统一控件样式。昵称支持中文输入法，最多 16 个 Unicode 字符，在回车、失焦、切换页面或退出时保存；输入期间清空不会被默认名打断。
+宠物继续由 Rust + egui/eframe + Glow 原生渲染；关闭 vsync 和持续渲染，按事件与状态唤醒：矢量待机 2 FPS、矢量活跃 12 FPS；多帧 PNG 根据当前状态的播放速度提高重绘频率，最高 30 FPS；安静 1 FPS，节能模式 4 FPS。Tauri 面板使用独立进程，仅在打开时创建 WebView；关闭时退出，未打开面板时没有 WebView 进程。仅在收纳远程资源时下载，无上传；远程下载可关闭。没有后台 AI、后台截图或视频解码。面板使用柔和配色、轻卡片和较多留白。昵称使用浏览器原生中文输入法，最多 16 个 Unicode 字符，完成编辑时保存；输入期间清空不会被默认名打断。实现和开发命令见 [Tauri 面板说明](docs/TAURI_PANEL.md)。
 
 CPU 和内存是**实测结果，不作无依据的保证**。性能目标、测量方法和平台差异见 [性能说明](docs/PERFORMANCE.md)。
 
@@ -111,13 +116,17 @@ cargo run -- --settings-page transfer
 
 ```text
 src/engine.rs       确定性情绪、互动、冷落升级与事件限频
-src/app.rs          透明宠物窗口、独立设置窗口、恢复工作线程
+src/app.rs          透明宠物窗口、面板命令分发、恢复工作线程
+src/panel_host.rs   按需启动 / 关闭面板、进程管道通信
+src/panel_ipc.rs    请求、响应与事件的共享 JSON 协议
+panel/src/         Vue 六页面、样式、字体与前端桥
+panel/src-tauri/   Tauri 面板窗口、原生拖放桥和对话框
 src/skin/           皮肤定义、校验、包读写、通用绘制和透明命中
 skins/              默认角色、换色示例和 PNG 模板的独立 UI 文件
 src/art.rs          控制面板配色、托盘图标与移动向量工具
-src/panel.rs        原生设置面板的卡片、导航、按钮与开关
+src/panel.rs        保留的 egui 对照面板（仅 --legacy-panel）
 src/content/        SQLite 元数据、内容库、后台复制 / 下载 / 导出
-src/content_panel.rs 剪切板与中转站的列表、预览、搜索及操作
+src/content_panel.rs 内容服务控制器、异步面板请求与导出引用
 src/native_content/ Windows / macOS 剪切板和系统原生拖放
 src/hover.rs        低开销悬停边界唤醒，不靠高帧率保证可点击
 src/shell.rs        托盘 / 菜单栏与全局快捷键

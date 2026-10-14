@@ -1,0 +1,1 @@
+{ "identifier": "main", "description": "Local Mochi panel window", "windows": ["main"], "permissions": ["core:default", "core:window:allow-close"] }
