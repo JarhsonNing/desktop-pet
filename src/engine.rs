@@ -24,6 +24,7 @@ pub enum Interaction {
     Release,
     Busy,
     Wake,
+    StopMischief,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,6 +134,10 @@ impl Engine {
                 self.quiet_until = 0.0;
                 self.say("我没有睡！我在闭眼思考。", Mood::Happy, now, 4.0);
             }
+            Interaction::StopMischief => {
+                self.effect_until = now;
+                self.say("好啦，不闹了，听你的。", Mood::Happy, now, 4.0);
+            }
         }
         if self.hidden {
             self.hidden = false;
@@ -144,6 +149,10 @@ impl Engine {
 
     pub fn quiet(&self, now: f64) -> bool {
         self.config.quiet || now < self.quiet_until
+    }
+
+    pub fn mischief_active(&self) -> bool {
+        self.hidden || self.mood == Mood::Chase
     }
 
     /// Stops transient behaviors for exit; the caller must also restore desktop effects.
@@ -159,7 +168,7 @@ impl Engine {
         self.next_antic = f64::INFINITY;
     }
 
-    pub fn tick(&mut self, now: f64) -> Option<Effect> {
+    pub fn tick(&mut self, now: f64, desktop_active: bool) -> Option<Effect> {
         if self.hidden
             && (now >= self.effect_until
                 || self.quiet(now)
@@ -193,21 +202,22 @@ impl Engine {
         if self.config.level != MischiefLevel::Calm {
             if neglected >= interval * 3.0 && self.stage < 3 {
                 self.stage = 3;
-                if self.config.level == MischiefLevel::Devil
-                    && self.config.allow_hide_icons
-                    && self.config.hide_icons_consent_version == 1
-                {
-                    self.begin_hide(now);
-                    return Some(Effect::HideIcons);
+                if desktop_active {
+                    if self.config.level == MischiefLevel::Devil
+                        && self.config.allow_hide_icons
+                        && self.config.hide_icons_consent_version == 1
+                    {
+                        self.begin_hide(now);
+                        return Some(Effect::HideIcons);
+                    }
+                } else if self.config.allow_cursor_chase {
+                    self.begin_chase(now);
                 }
+                return None;
             }
             if neglected >= interval * 2.0 && self.stage < 2 {
                 self.stage = 2;
-                if self.config.allow_cursor_chase {
-                    self.say("别看那里，看我！", Mood::Chase, now, 10.0);
-                } else {
-                    self.say("我都躺好了，你还不摸摸？", Mood::Grumpy, now, 5.0);
-                }
+                self.say("我都躺好了，你还不摸摸？", Mood::Grumpy, now, 5.0);
                 return None;
             }
             if neglected >= interval && self.stage < 1 {
@@ -233,11 +243,15 @@ impl Engine {
         None
     }
 
+    pub fn begin_chase(&mut self, now: f64) {
+        self.say("来追你啦！双击我就停下。", Mood::Chase, now, 10.0);
+    }
+
     pub fn begin_hide(&mut self, now: f64) {
         self.hidden = true;
         self.effect_until = now + self.config.icon_hide_seconds as f64;
         self.say(
-            "图标在我手里！随时可以一键归还。",
+            "图标在我手里！双击我就归还。",
             Mood::Hiding,
             now,
             self.config.icon_hide_seconds as f64,
@@ -289,7 +303,7 @@ mod tests {
     fn defaults_never_hide_or_chase() {
         let mut pet = engine();
         for time in 0..10000 {
-            assert_ne!(pet.tick(time as f64), Some(Effect::HideIcons));
+            assert_ne!(pet.tick(time as f64, true), Some(Effect::HideIcons));
             assert_ne!(pet.mood, Mood::Chase);
         }
     }
@@ -300,15 +314,123 @@ mod tests {
         pet.config.allow_cursor_chase = true;
         pet.config.allow_hide_icons = true;
         pet.config.hide_icons_consent_version = 1;
-        pet.tick(31.0);
+        pet.tick(31.0, true);
         assert_eq!(pet.stage, 1);
-        pet.tick(61.0);
-        assert_eq!(pet.mood, Mood::Chase);
-        assert_eq!(pet.tick(91.0), Some(Effect::HideIcons));
-        assert_eq!(pet.tick(107.0), Some(Effect::RestoreIcons));
-        assert_eq!(pet.tick(120.0), None);
+        pet.tick(61.0, true);
+        assert_eq!(pet.mood, Mood::Grumpy);
+        assert_eq!(pet.tick(91.0, true), Some(Effect::HideIcons));
+        assert_eq!(pet.tick(107.0, true), Some(Effect::RestoreIcons));
+        assert_eq!(pet.tick(120.0, true), None);
         assert!(!pet.hidden);
     }
+    #[test]
+    fn neglect_selects_one_prank_for_the_foreground_without_switching_later() {
+        for desktop_active in [true, false] {
+            let mut pet = engine();
+            pet.config.level = MischiefLevel::Devil;
+            pet.config.allow_hide_icons = true;
+            pet.config.hide_icons_consent_version = 1;
+            pet.config.allow_cursor_chase = true;
+            pet.next_antic = f64::INFINITY;
+            pet.tick(31.0, desktop_active);
+            pet.tick(61.0, desktop_active);
+            assert!(!pet.mischief_active());
+            assert_eq!(
+                pet.tick(91.0, desktop_active),
+                desktop_active.then_some(Effect::HideIcons)
+            );
+            assert_eq!(pet.stage, 3);
+            assert_eq!(pet.hidden, desktop_active);
+            assert_eq!(pet.mood == Mood::Chase, !desktop_active);
+            assert_eq!(pet.tick(92.0, !desktop_active), None);
+            assert_eq!(pet.hidden, desktop_active);
+            assert_eq!(pet.mood == Mood::Chase, !desktop_active);
+            assert_eq!(
+                pet.tick(130.0, !desktop_active),
+                desktop_active.then_some(Effect::RestoreIcons)
+            );
+            assert!(!pet.mischief_active());
+            assert_eq!(pet.tick(400.0, true), None);
+            assert!(!pet.mischief_active());
+        }
+    }
+
+    #[test]
+    fn chase_fallback_obeys_cursor_consent_in_playful_and_devil_modes() {
+        for level in [MischiefLevel::Playful, MischiefLevel::Devil] {
+            for allowed in [false, true] {
+                let mut pet = engine();
+                pet.config.level = level;
+                pet.config.allow_cursor_chase = allowed;
+                pet.next_antic = f64::INFINITY;
+                assert_eq!(pet.tick(91.0, false), None);
+                assert_eq!(pet.mood == Mood::Chase, allowed);
+                assert!(!pet.hidden);
+            }
+        }
+    }
+
+    #[test]
+    fn stop_mischief_interaction_ends_both_pranks_and_resets_neglect() {
+        for hiding in [true, false] {
+            let mut pet = engine();
+            pet.config.level = MischiefLevel::Devil;
+            pet.config.allow_hide_icons = true;
+            pet.config.hide_icons_consent_version = 1;
+            pet.config.allow_cursor_chase = true;
+            if hiding {
+                pet.begin_hide(91.0);
+            } else {
+                pet.begin_chase(91.0);
+            }
+            pet.stage = 3;
+            assert_eq!(
+                pet.interact(Interaction::StopMischief, 92.0),
+                hiding.then_some(Effect::RestoreIcons)
+            );
+            assert!(!pet.mischief_active());
+            assert_eq!(pet.stage, 0);
+            assert_eq!(pet.last_interaction, 92.0);
+            assert_eq!(pet.tick(93.0, true), None);
+            assert_eq!(pet.tick(100.0, false), None);
+            assert!(!pet.mischief_active());
+            assert!(!pet.quiet(100.0));
+        }
+    }
+
+    #[test]
+    fn chase_still_times_out_without_a_double_click() {
+        let mut pet = engine();
+        pet.config.allow_cursor_chase = true;
+        pet.next_antic = f64::INFINITY;
+        pet.begin_chase(1.0);
+        pet.tick(10.9, false);
+        assert_eq!(pet.mood, Mood::Chase);
+        pet.tick(11.0, false);
+        assert!(!pet.mischief_active());
+    }
+
+    #[test]
+    fn desktop_hide_still_requires_consent_and_devil_mode() {
+        for (level, allowed, version, quiet) in [
+            (MischiefLevel::Calm, true, 1, false),
+            (MischiefLevel::Playful, true, 1, false),
+            (MischiefLevel::Devil, false, 1, false),
+            (MischiefLevel::Devil, true, 0, false),
+            (MischiefLevel::Devil, true, 1, true),
+        ] {
+            let mut pet = engine();
+            pet.config.level = level;
+            pet.config.allow_hide_icons = allowed;
+            pet.config.hide_icons_consent_version = version;
+            pet.config.quiet = quiet;
+            pet.next_antic = f64::INFINITY;
+            assert_ne!(pet.tick(91.0, true), Some(Effect::HideIcons));
+            assert!(!pet.hidden);
+            assert_ne!(pet.mood, Mood::Chase);
+        }
+    }
+
     #[test]
     fn interaction_returns_icons_without_a_minigame() {
         let mut pet = engine();
@@ -324,9 +446,9 @@ mod tests {
         let mut pet = engine();
         pet.begin_hide(0.0);
         pet.config.quiet = true;
-        assert_eq!(pet.tick(1.0), Some(Effect::RestoreIcons));
+        assert_eq!(pet.tick(1.0, true), Some(Effect::RestoreIcons));
         for time in 2..500 {
-            assert_eq!(pet.tick(time as f64), None);
+            assert_eq!(pet.tick(time as f64, true), None);
         }
         assert_eq!(pet.mood, Mood::Sleep);
         assert_eq!(pet.frame_interval(500.0).as_secs(), 1);
@@ -344,7 +466,7 @@ mod tests {
     fn disable_consent_restores_and_memory_is_bounded() {
         let mut pet = engine();
         pet.begin_hide(0.0);
-        assert_eq!(pet.tick(1.0), Some(Effect::RestoreIcons));
+        assert_eq!(pet.tick(1.0, true), Some(Effect::RestoreIcons));
         for count in 0..100 {
             pet.interact(Interaction::Feed, count as f64);
         }
@@ -358,7 +480,7 @@ mod tests {
         pet.config.allow_cursor_chase = true;
         pet.say("别看那里，看我！", Mood::Chase, 0.0, 10.0);
         pet.config.allow_cursor_chase = false;
-        pet.tick(1.0);
+        pet.tick(1.0, true);
         assert_ne!(pet.mood, Mood::Chase);
     }
 
@@ -452,7 +574,7 @@ mod tests {
             assert!(pet.bubble.is_none());
             assert_eq!(pet.stage, 0);
             for time in [93.0, 200.0, 10000.0] {
-                assert_eq!(pet.tick(time), None);
+                assert_eq!(pet.tick(time, true), None);
                 assert_eq!(pet.mood, Mood::Sleep);
             }
             assert_eq!(serde_json::to_value(&pet.config).unwrap(), saved);

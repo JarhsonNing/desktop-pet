@@ -1,3 +1,6 @@
+import { invoke as nativeInvoke } from "@tauri-apps/api/core";
+import { listen as nativeListen } from "@tauri-apps/api/event";
+
 declare global {
   interface Window {
     __TAURI__?: {
@@ -12,6 +15,10 @@ declare global {
       };
     };
   }
+}
+// Expose the bridge only in the trusted parent entrypoint, never in agent.html.
+if (window.top === window && "__TAURI_INTERNALS__" in window) {
+  window.__TAURI__ = { core: { invoke: nativeInvoke }, event: { listen: nativeListen } };
 }
 export async function invoke<T = unknown>(
   command: string,

@@ -8,8 +8,8 @@ use windows_sys::Win32::{
     },
     System::Threading::{GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
     UI::WindowsAndMessaging::{
-        EnumWindows, FindWindowExW, GetClassNameW, GetCursorPos, IsWindowVisible, SW_HIDE,
-        SW_SHOWNA, ShowWindow,
+        EnumWindows, FindWindowExW, GA_ROOT, GetAncestor, GetClassNameW, GetCursorPos,
+        GetForegroundWindow, IsWindowVisible, SW_HIDE, SW_SHOWNA, ShowWindow,
     },
 };
 
@@ -17,13 +17,13 @@ fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
 }
 
-unsafe extern "system" fn find_desktop(window: HWND, parameter: LPARAM) -> i32 {
+fn desktop_icons(window: HWND) -> Option<HWND> {
     let mut class_buffer = [0_u16; 256];
     let count =
         unsafe { GetClassNameW(window, class_buffer.as_mut_ptr(), class_buffer.len() as i32) };
     let class = String::from_utf16_lossy(&class_buffer[..count.max(0) as usize]);
     if !matches!(class.as_str(), "Progman" | "WorkerW") {
-        return 1;
+        return None;
     }
     let shell_class = wide("SHELLDLL_DefView");
     let list_class = wide("SysListView32");
@@ -33,11 +33,18 @@ unsafe extern "system" fn find_desktop(window: HWND, parameter: LPARAM) -> i32 {
         let icons =
             unsafe { FindWindowExW(shell, ptr::null_mut(), list_class.as_ptr(), ptr::null()) };
         if !icons.is_null() {
-            unsafe {
-                *(parameter as *mut HWND) = icons;
-            }
-            return 0;
+            return Some(icons);
         }
+    }
+    None
+}
+
+unsafe extern "system" fn find_desktop(window: HWND, parameter: LPARAM) -> i32 {
+    if let Some(icons) = desktop_icons(window) {
+        unsafe {
+            *(parameter as *mut HWND) = icons;
+        }
+        return 0;
     }
     1
 }
@@ -52,6 +59,17 @@ fn desktop() -> io::Result<HWND> {
     } else {
         Ok(result)
     }
+}
+
+pub fn desktop_is_foreground() -> bool {
+    let foreground = unsafe { GetForegroundWindow() };
+    if foreground.is_null() {
+        return false;
+    }
+    let root = unsafe { GetAncestor(foreground, GA_ROOT) };
+    // Match the actual Explorer desktop, including focus on its icon list.
+    // Window size is irrelevant: a fullscreen application is not the desktop.
+    desktop_icons(root).is_some()
 }
 
 pub fn cursor_position(scale: f32, _reference_height: f32) -> Option<[f32; 2]> {

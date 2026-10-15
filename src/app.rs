@@ -120,6 +120,7 @@ impl Drop for DesktopWorker {
 }
 
 pub struct PetApp {
+    agent: desktop_pet::agent::Service,
     engine: Engine,
     content: crate::content_panel::ContentPanel,
     skin_drop_area: Option<Rect>,
@@ -133,6 +134,7 @@ pub struct PetApp {
     shell: Option<Shell>,
     shell_initialized: bool,
     settings: bool,
+    delivery_picker: bool,
     tab: usize,
     confirm_icons: bool,
     acknowledge_icons: bool,
@@ -188,6 +190,7 @@ impl PetApp {
             .control_stdin
             .then(|| crate::panel_host::test_requests(creation.egui_ctx.clone()));
         Self {
+            agent: desktop_pet::agent::Service::new(&directory),
             engine: Engine::new(config, 0.0, safety::timestamp()),
             content,
             skin_drop_area: None,
@@ -201,6 +204,7 @@ impl PetApp {
             shell: None,
             shell_initialized: false,
             settings,
+            delivery_picker: false,
             tab: options.settings_page,
             confirm_icons: false,
             acknowledge_icons: false,
@@ -233,6 +237,23 @@ impl PetApp {
         }
         if let Some(effect) = self.engine.interact(action, now) {
             self.effect(effect);
+        }
+    }
+
+    fn pet_click(&mut self, double_clicked: bool, now: f64) {
+        if self.engine.mischief_active() {
+            if double_clicked {
+                self.action(Interaction::StopMischief, now);
+            }
+        } else {
+            self.action(
+                if double_clicked {
+                    Interaction::Poke
+                } else {
+                    Interaction::Pet
+                },
+                now,
+            );
         }
     }
 
@@ -331,6 +352,7 @@ impl PetApp {
                     context.clone(),
                 ) {
                     Ok(panel) => {
+                        self.agent.panel(true);
                         self.content.attach_panel(panel.sender());
                         self.web_page = self.tab;
                         self.web_panel = Some(panel);
@@ -367,7 +389,19 @@ impl PetApp {
     }
 
     fn poll_web_panel(&mut self, context: &egui::Context, now: f64) {
+        for message in self.agent.messages.try_iter() {
+            if let Some(panel) = &self.web_panel {
+                panel.send(message.clone());
+            }
+            if self.options.control_stdin
+                && message.id.is_some()
+                && let Ok(line) = serde_json::to_string(&message)
+            {
+                println!("{line}");
+            }
+        }
         if self.web_panel.as_mut().is_some_and(|panel| panel.exited()) {
+            self.agent.panel(false);
             let reopen =
                 self.settings && self.web_panel.as_ref().is_some_and(|panel| panel.closing);
             self.content.detach_panel();
@@ -402,6 +436,9 @@ impl PetApp {
             let message = match self.web_command(context, now, &request) {
                 Ok(Some(value)) => desktop_pet::panel_ipc::Message::result(request.id, value),
                 Ok(None) => {
+                    if request.command.starts_with("agent_") {
+                        continue;
+                    }
                     desktop_pet::panel_ipc::Message::result(request.id, serde_json::Value::Null)
                 }
                 Err(error) => desktop_pet::panel_ipc::Message::error(request.id, error),
@@ -418,12 +455,20 @@ impl PetApp {
         now: f64,
         request: &desktop_pet::panel_ipc::Request,
     ) -> Result<Option<serde_json::Value>, String> {
+        if request.command.starts_with("agent_") {
+            self.agent.request(desktop_pet::panel_ipc::Request {
+                id: request.id,
+                command: request.command.clone(),
+                args: request.args.clone(),
+            })?;
+            return Ok(None);
+        }
         use serde_json::json;
         let args = &request.args;
         let value = match request.command.as_str() {
             "open_panel" => {
-                self.settings = true;
-                self.tab = args["page"].as_u64().unwrap_or(self.tab as u64).min(5) as usize;
+                self.shell_action(context, ShellAction::Settings, now);
+                self.tab = args["page"].as_u64().unwrap_or(self.tab as u64).min(6) as usize;
                 json!(true)
             }
             "close_panel" => {
@@ -437,6 +482,7 @@ impl PetApp {
                 json!(true)
             }
             "panel_closing" => {
+                self.agent.panel(false);
                 if let Some(panel) = &mut self.web_panel {
                     panel.closing = true;
                 }
@@ -447,11 +493,15 @@ impl PetApp {
                 "config":self.engine.config,"mood":format!("{:?}",self.engine.mood),"quiet":self.engine.quiet(now),
                 "busy_seconds":(self.engine.quiet_until-now).max(0.0) as u64,"hidden":self.engine.hidden,"journal":self.engine.history,
                 "skin":self.skin.skin.manifest,"skin_path":self.skin_path,"status":self.status,"content":self.content.web_snapshot(),
-                "page":self.tab,"data_dir":self.directory,"platform":std::env::consts::OS,"version":env!("CARGO_PKG_VERSION")
+                "page":self.tab,"data_dir":self.directory,"platform":std::env::consts::OS,"version":env!("CARGO_PKG_VERSION"),"delivery_picker":self.delivery_picker
             }),
+            "delivery_picker" => {
+                self.delivery_picker = args["open"].as_bool().unwrap_or(true);
+                json!(true)
+            }
             "skin_preview" => json!(self.skin.skin.preview_svg().map_err(|e| e.to_string())?),
             "page" => {
-                self.tab = args["page"].as_u64().unwrap_or(0).min(5) as usize;
+                self.tab = args["page"].as_u64().unwrap_or(0).min(6) as usize;
                 self.web_page = self.tab;
                 json!(true)
             }
@@ -476,6 +526,7 @@ impl PetApp {
                             | "clipboard_limit"
                             | "content_quota_gib"
                             | "download_dropped_resources"
+                            | "explorer_enabled"
                             | "allow_hide_icons"
                     ) {
                         return Err(format!("不可修改的设置：{key}"));
@@ -533,7 +584,7 @@ impl PetApp {
                         if !self.engine.config.allow_cursor_chase || self.engine.quiet(now) {
                             return Err("请先允许光标追逐并关闭安静模式".into());
                         }
-                        self.engine.say("别看那里，看我！", Mood::Chase, now, 10.0);
+                        self.engine.begin_chase(now);
                         return Ok(Some(json!(true)));
                     }
                     "hide" => {
@@ -927,7 +978,7 @@ impl PetApp {
                     )
                     .clicked()
                 {
-                    self.engine.say("别看那里，看我！", Mood::Chase, now, 10.0);
+                    self.engine.begin_chase(now);
                 }
                 if ui
                     .add_enabled(
@@ -1072,7 +1123,7 @@ impl PetApp {
                 ui,
                 &mut self.engine.config.allow_cursor_chase,
                 "光标追逐",
-                "最长 10 秒；不移动鼠标，不拦截点击。",
+                "双击宠物结束，最长 10 秒；不移动鼠标，透明区域点击穿透。",
             );
             ui.add_space(10.0);
             ui.separator();
@@ -1105,9 +1156,13 @@ impl PetApp {
                 }
             });
             ui.label(
-                RichText::new("只在小恶魔模式触发；暂时隐藏图标，不修改桌面文件。")
-                    .size(12.0)
-                    .color(panel::MUTED),
+                RichText::new(if cfg!(target_os = "windows") {
+                    "小恶魔模式下，仅在显示桌面时自动隐藏图标；双击宠物归还。"
+                } else {
+                    "只在小恶魔模式触发；双击宠物归还，不修改桌面文件。"
+                })
+                .size(12.0)
+                .color(panel::MUTED),
             );
             changed |= ui
                 .add(
@@ -1276,7 +1331,7 @@ impl PetApp {
         });
         if !paths.is_empty() {
             self.content
-                .receive(vec![desktop_pet::content::Payload::Files(paths)]);
+                .receive_drop(vec![desktop_pet::content::Payload::Files(paths)]);
         }
     }
 
@@ -1370,6 +1425,22 @@ impl PetApp {
         });
     }
 
+    fn cursor_over_pet(&self, now: f64) -> bool {
+        self.cursor.is_some_and(|cursor| {
+            let scale = self.engine.config.scale;
+            let local = Vec2::from(cursor.position) - self.position.to_vec2();
+            let gaze = (local - Vec2::from(self.skin.skin.ui.gaze_origin) * scale)
+                / self.skin.skin.ui.gaze_distance;
+            self.skin.skin.hit_test(
+                [local.x, local.y],
+                scale,
+                self.engine.mood,
+                now,
+                [gaze.x, gaze.y],
+            )
+        })
+    }
+
     fn utility_rects(&self, now: f64) -> Vec<Rect> {
         let scale = self.engine.config.scale;
         let mut rects = Vec::new();
@@ -1386,7 +1457,7 @@ impl PetApp {
                 Vec2::new(r[2], r[3]) * scale,
             ));
         }
-        if !self.content.snapshot.transfer.is_empty() {
+        if !self.content.delivery.selected.is_empty() {
             let canvas = self.skin.skin.ui.canvas;
             rects.push(Rect::from_min_size(
                 Pos2::new(canvas[0] - 30.0, canvas[1] - 28.0) * scale,
@@ -1437,16 +1508,30 @@ impl PetApp {
                             )
                     });
                 if over_pet && response.secondary_clicked() {
-                    self.settings = true;
+                    self.shell_action(context, ShellAction::Settings, now);
+                    self.tab = 5;
+                    self.delivery_picker = true;
                 }
                 if over_pet && response.double_clicked() {
-                    self.action(Interaction::Poke, now);
+                    self.pet_click(true, now);
                 } else if over_pet && response.clicked() {
-                    self.action(Interaction::Pet, now);
+                    self.pet_click(false, now);
                 }
-                if over_pet && response.drag_started() {
-                    self.action(Interaction::Drag, now);
-                    context.send_viewport_cmd(ViewportCommand::StartDrag);
+                if over_pet && response.drag_started() && !self.engine.mischief_active() {
+                    if context.input(|input| input.modifiers.alt) {
+                        if self.content.delivery.selected.is_empty() {
+                            self.shell_action(context, ShellAction::Settings, now);
+                            self.tab = 5;
+                            self.delivery_picker = true;
+                        } else if let Err(error) = self.content.start_delivery() {
+                            self.status = Some(error.clone());
+                            self.engine
+                                .say("文件正在准备，请稍后再拖动。", Mood::Idle, now, 3.0);
+                        }
+                    } else {
+                        self.action(Interaction::Drag, now);
+                        context.send_viewport_cmd(ViewportCommand::StartDrag);
+                    }
                 }
                 if self.engine.mood == Mood::Dragged
                     && !context.input(|input| input.pointer.primary_down())
@@ -1548,12 +1633,12 @@ impl PetApp {
                         }
                     }
                 }
-                if !self.content.snapshot.transfer.is_empty() {
+                if !self.content.delivery.selected.is_empty() {
                     let badge_rect = Rect::from_min_size(
                         rect.min + Vec2::new(canvas.x - 30.0, canvas.y - 28.0) * scale,
                         Vec2::splat(24.0) * scale,
                     );
-                    let count = self.content.snapshot.transfer.len();
+                    let count = self.content.delivery.selected.len();
                     ui.painter()
                         .circle_filled(badge_rect.center(), 12.0 * scale, art::BLUE);
                     ui.painter().text(
@@ -1573,8 +1658,9 @@ impl PetApp {
                         egui::Sense::click(),
                     );
                     if response.clicked() {
-                        self.settings = true;
+                        self.shell_action(context, ShellAction::Settings, now);
                         self.tab = 5;
+                        self.delivery_picker = true;
                     }
                 }
             });
@@ -1610,6 +1696,7 @@ impl PetApp {
         self.content.service.stop();
         self.content.detach_panel();
         self.web_panel.take();
+        self.agent.stop();
         self.save();
     }
 
@@ -1657,7 +1744,7 @@ impl eframe::App for PetApp {
             {
                 self.load_skin(context, &files[0]);
             } else {
-                self.content.receive(drop.payloads);
+                self.content.receive_drop(drop.payloads);
             }
         }
         self.dropped_skin(context);
@@ -1694,7 +1781,7 @@ impl eframe::App for PetApp {
                 }
             }
         }
-        if let Some(effect) = self.engine.tick(now) {
+        if let Some(effect) = self.engine.tick(now, platform::desktop_is_foreground()) {
             self.effect(effect);
         }
         let scale = self.engine.config.scale;
@@ -1739,7 +1826,10 @@ impl eframe::App for PetApp {
         if self.content.receiving || self.content.dragging {
             // Native drag sessions must keep the receiving pet stationary.
         } else if chasing {
-            if let Some(cursor) = self.cursor {
+            // Keep the pet still under the pointer so both clicks hit the same target.
+            if !self.cursor_over_pet(now)
+                && let Some(cursor) = self.cursor
+            {
                 let target = Pos2::new(cursor.position[0], cursor.position[1])
                     - Vec2::from(self.skin.skin.ui.chase_anchor) * scale;
                 self.position += art::limit_length(target - self.position, 420.0 * delta);
@@ -1823,15 +1913,7 @@ impl eframe::App for PetApp {
                     / self.skin.skin.ui.gaze_distance
             })
             .unwrap_or(Vec2::ZERO);
-        let over_pet = local.is_none_or(|point| {
-            self.skin.skin.hit_test(
-                [point.x, point.y],
-                scale,
-                self.engine.mood,
-                now,
-                [gaze.x, gaze.y],
-            )
-        });
+        let over_pet = self.cursor.is_none() || self.cursor_over_pet(now);
         let over_recovery = self.engine.hidden
             && local.is_some_and(|point| self.skin.skin.recovery_hit([point.x, point.y], scale));
         let extras = self.utility_rects(now);
@@ -1848,7 +1930,8 @@ impl eframe::App for PetApp {
             && !over_drop
             && !over_utility
             && !self.content.receiving
-            && (chasing || !(over_pet || over_recovery) && self.engine.mood != Mood::Dragged);
+            && !(over_pet || over_recovery)
+            && self.engine.mood != Mood::Dragged;
         if self.passthrough != passthrough {
             self.passthrough = passthrough;
             context.send_viewport_cmd(ViewportCommand::MousePassthrough(passthrough));
@@ -1974,6 +2057,164 @@ fn configure_style(context: &egui::Context) {
 mod tests {
     use super::*;
     use std::sync::atomic::AtomicUsize;
+
+    #[test]
+    fn chase_pauses_and_accepts_clicks_over_the_pet_and_passes_clicks_elsewhere() {
+        use eframe::App;
+        let directory = std::env::temp_dir().join(format!(
+            "mochi-chase-target-{}-{}",
+            std::process::id(),
+            safety::timestamp()
+        ));
+        let context = egui::Context::default();
+        let mut app = PetApp::new(
+            &eframe::CreationContext::_new_kittest(context.clone()),
+            config::Config {
+                allow_cursor_chase: true,
+                clipboard_enabled: false,
+                ..Default::default()
+            },
+            directory.clone(),
+            safety::lock(&directory.join("instance.lock")).unwrap(),
+            None,
+            Options {
+                no_shell: true,
+                ..Default::default()
+            },
+            Instant::now(),
+        );
+        app.engine.begin_chase(0.0);
+        app.position = Pos2::new(100.0, 100.0);
+        app.positioned = true;
+        app.passthrough = true;
+        app.next_cursor_poll = f64::INFINITY;
+        app.cursor = Some(platform::Cursor {
+            position: [230.0, 260.0],
+            work_area: [0.0, 0.0, 1920.0, 1080.0],
+            reference_height: 0.0,
+        });
+        let screen = Rect::from_min_size(Pos2::ZERO, Vec2::new(260.0, 250.0));
+        let origin = app.position;
+        app.previous = -1.0;
+        let output = context.run(
+            egui::RawInput {
+                screen_rect: Some(screen),
+                time: Some(0.0),
+                ..Default::default()
+            },
+            |context| app.update(context, &mut eframe::Frame::_new_kittest()),
+        );
+        assert_eq!(app.position, origin);
+        assert_eq!(app.engine.mood, Mood::Chase);
+        assert!(!app.passthrough);
+        assert!(
+            output.viewport_output[&ViewportId::ROOT]
+                .commands
+                .contains(&ViewportCommand::MousePassthrough(false))
+        );
+        app.cursor.as_mut().unwrap().position = [1200.0, 800.0];
+        app.previous = -1.0;
+        let output = context.run(
+            egui::RawInput {
+                screen_rect: Some(screen),
+                time: Some(0.1),
+                ..Default::default()
+            },
+            |context| app.update(context, &mut eframe::Frame::_new_kittest()),
+        );
+        assert!(app.position.distance(origin) > 0.0);
+        assert_eq!(app.engine.mood, Mood::Chase);
+        assert!(app.passthrough);
+        assert!(
+            output.viewport_output[&ViewportId::ROOT]
+                .commands
+                .contains(&ViewportCommand::MousePassthrough(true))
+        );
+        drop(app);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn pet_double_click_ends_pranks_while_the_first_click_keeps_them_active() {
+        for hiding in [true, false] {
+            let directory = std::env::temp_dir().join(format!(
+                "mochi-double-click-{hiding}-{}-{}",
+                std::process::id(),
+                safety::timestamp()
+            ));
+            let context = egui::Context::default();
+            let mut app = PetApp::new(
+                &eframe::CreationContext::_new_kittest(context.clone()),
+                config::Config::default(),
+                directory.clone(),
+                safety::lock(&directory.join("instance.lock")).unwrap(),
+                None,
+                Options::default(),
+                Instant::now(),
+            );
+            app.desktop = DesktopWorker::with_operations(
+                directory.clone(),
+                context.clone(),
+                |_, _| panic!("click tests must not hide desktop icons"),
+                |_| Ok(true),
+            );
+            if hiding {
+                app.engine.begin_hide(0.0);
+            } else {
+                app.engine.begin_chase(0.0);
+            }
+            app.engine.stage = 3;
+            let point = Pos2::new(130.0, 160.0);
+            let screen = Rect::from_min_size(Pos2::ZERO, Vec2::new(260.0, 250.0));
+            let _ = context.run(
+                egui::RawInput {
+                    screen_rect: Some(screen),
+                    time: Some(0.0),
+                    ..Default::default()
+                },
+                |context| app.draw_pet(context, 0.0),
+            );
+            for (time, pressed) in [(1.0, true), (1.03, false), (1.1, true), (1.13, false)] {
+                let _ = context.run(
+                    egui::RawInput {
+                        screen_rect: Some(screen),
+                        time: Some(time),
+                        events: vec![
+                            egui::Event::PointerMoved(point),
+                            egui::Event::PointerButton {
+                                pos: point,
+                                button: egui::PointerButton::Primary,
+                                pressed,
+                                modifiers: egui::Modifiers::NONE,
+                            },
+                        ],
+                        ..Default::default()
+                    },
+                    |context| app.draw_pet(context, time),
+                );
+                if time < 1.13 {
+                    assert!(app.engine.mischief_active(), "hiding={hiding}, time={time}");
+                    assert_eq!(app.engine.config.interactions, 0);
+                }
+            }
+            assert!(!app.engine.mischief_active(), "hiding={hiding}");
+            assert_eq!(app.engine.config.interactions, 1);
+            assert_eq!(app.engine.stage, 0);
+            if hiding {
+                assert!(
+                    app.desktop
+                        .receiver
+                        .recv_timeout(Duration::from_secs(5))
+                        .unwrap()
+                        .is_ok()
+                );
+            } else {
+                assert!(app.desktop.receiver.try_recv().is_err());
+            }
+            drop(app);
+            std::fs::remove_dir_all(directory).unwrap();
+        }
+    }
 
     #[test]
     fn chinese_names_render_in_both_font_families_and_ime_commits_text() {

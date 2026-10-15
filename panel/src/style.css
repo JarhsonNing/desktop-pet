@@ -13,6 +13,9 @@
   --warm: #f1d8c0;
   --soft: #eeecf6;
 }
+.home-body { display:flex; flex-direction:column; min-height:0; overflow:hidden !important; gap:14px; }
+.agent-frame { width:100%; flex:1; min-height:0; border:1px solid var(--line); border-radius:12px; background:white; }
+.mcp-editor { width:100%; min-height:180px; margin:8px 0 14px; padding:12px; resize:vertical; border:1px solid var(--line); border-radius:8px; font:13px Consolas,monospace; }
 * {
   box-sizing: border-box;
 }
@@ -1451,3 +1454,88 @@ textarea,
 .preview-area pre {
   font-family: "Mochi Sans", "Microsoft YaHei UI", "PingFang SC", sans-serif;
 }
+.delivery-backdrop {
+  z-index: 105;
+}
+.delivery-modal {
+  width: 680px;
+  max-width: 90vw;
+}
+.delivery-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 12px;
+}
+.delivery-search {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #faf8fc;
+}
+.delivery-list {
+  min-height: 90px;
+  max-height: 42vh;
+  overflow: auto;
+  margin: 14px 0;
+}
+.delivery-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  cursor: pointer;
+}
+.delivery-choice span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.delivery-choice input {
+  accent-color: var(--accent);
+}
+.delivery-choice small {
+  font-size: 10px;
+}
+.storage-path {
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+/* The home page is the conversation surface; tools stay next to its composer. */
+.chat-home .workspace { position:relative; }
+.chat-home .home-body { padding:0; gap:0; scrollbar-gutter:auto; }
+.chat-home .agent-frame { border:0; border-radius:0; background:transparent; display:block; }
+.chat-close { position:absolute; right:25px; top:20px; z-index:5; padding:7px 10px; font-size:11px; }
+.chat-home .sidebar-pet { display:none; }
+.chat-home .sidebar-footer { margin-top:auto; }
+.agent-preferences { max-width:1080px; margin:0 auto; }
+.agent-settings-fields { padding:0; border:0; margin:0; min-width:0; }
+.agent-tabs { display:flex; gap:6px; margin:0 0 20px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+.agent-tabs button,.agent-mode button { border:0; background:transparent; padding:9px 15px; color:var(--muted); border-radius:8px; font:inherit; font-size:12px; }
+.agent-tabs button.selected,.agent-mode button.selected { color:var(--accent-deep); background:var(--soft); }
+.agent-mode { display:flex; border:1px solid var(--line); padding:3px; border-radius:10px; }
+.agent-mode button { padding:6px 12px; }
+.agent-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.agent-form>label { display:flex; flex-direction:column; gap:7px; font-size:12px; color:#666171; }
+.agent-form input:not([type=checkbox]),.agent-form select,.agent-form textarea,.agent-skill-search input { border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#fffefc; color:#343745; width:100%; min-width:0; font-size:12px; }
+.agent-form textarea { resize:vertical; line-height:1.6; }
+.agent-form .wide { grid-column:1/-1; }
+.agent-form-inset { padding:20px; border:1px solid var(--line); border-radius:12px; margin-top:20px; background:#faf9f7; }
+.agent-form-inset h4 { font-size:13px; font-weight:600; margin:0 0 12px; }
+.agent-form .check-label,.check-label { display:flex; flex-direction:row; align-items:center; gap:7px; font-size:12px; }
+.check-label input { accent-color:var(--accent); }
+.agent-save { margin-top:24px; padding-top:18px; border-top:1px solid var(--line); flex-wrap:wrap; }
+.agent-empty { padding:26px 12px; text-align:center; color:var(--muted); font-size:12px; line-height:1.8; }
+.agent-list-row { display:flex; align-items:center; gap:10px; padding:20px 0; border-bottom:1px solid var(--line); font-size:12px; }
+.agent-list-row>div { flex:1; min-width:0; }
+.agent-list-row strong { font-size:13px; font-weight:600; }
+.agent-list-row p { color:#80788c; line-height:1.8; margin:6px 0 3px; overflow-wrap:anywhere; }
+.agent-list-row small { color:#a29aaa; font-size:10px; overflow-wrap:anywhere; }
+.agent-skill-search { display:flex; gap:12px; margin-top:18px; }
+.agent-skill-search input { max-width:420px; }
+.skill-state { display:inline-block; margin-left:9px; padding:3px 7px; border-radius:5px; background:#eeeae7; color:#97909b; font-size:10px; }
+.skill-state.enabled { background:#edf2ed; color:#71917b; }
+.agent-confirm { width:420px; max-width:85vw; margin:0; }
+.agent-confirm p { font-size:12px; line-height:1.9; margin:20px 0; color:var(--muted); }
+@media(max-width:900px) { .agent-form { grid-template-columns:1fr; } .agent-preferences .section-title { flex-wrap:wrap; } .agent-tabs button { padding:8px 10px; } }

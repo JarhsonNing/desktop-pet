@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-15",
+  "platform": "Windows x64",
+  "pi": "1.2.0 bundled",
+  "ui": "Project-owned sources adapted from Pi web UI 0.75.3",
+  "passed": false,
+  "rustTests": 95,
+  "frontendBuild": true,
+  "rustFmt": true,
+  "clippy": true,
+  "agentChecks": [
+    "首页读取状态不启动 Pi，iframe 无 Tauri 入口",
+    "本地设置组件展示兼容端点，密钥不回显",
+    "MCP 表单与 JSON 往返保留高级字段，保存不启动 Pi",
+    "Skills 文件夹和 ZIP 安装、启停、卸载及目录隔离",
+    "中文组合输入 Enter 不发送",
+    "流式 Markdown、代码块与真实 read 工具调用",
+    "工具失败和中止摘要可见，展开状态随进度更新保留",
+    "图片附件进入 Pi，恢复后使用本地图片预览",
+    "执行中关闭面板，重开恢复且不重发",
+    "原生 MCP 服务调用不依赖 Node.js",
+    "停止与新建、切换 JSONL 会话"
+  ],
+  "panelChecks": [
+    "真实 Tauri 窗口与七页导航",
+    "相同页面再次打开时恢复最小化窗口并前置聚焦",
+    "昵称中文输入与配置持久化",
+    "宠物互动调用原生引擎",
+    "单独授权提示保持安全默认值",
+    "剪切板全文搜索与原生导出准备",
+    "中转站大图与收藏",
+    "皮肤重载接口与独立接收区域",
+    "多批拖入按文件累加默认选择，删除原件仍能取用",
+    "待发送选择器支持逐文件修改、收藏与清空",
+    "原生窗口拒绝无按键的过期拖动，取消后保留选择",
+    "此电脑文件箱展示独立副本，目录新增不写回记录",
+    "系统窗口关闭保存昵称草稿",
+    "窗口关闭后宠物继续运行"
+  ],
+  "modelRequests": 9,
+  "toolResults": 4,
+  "firstReplyMs": 3944,
+  "observedPageErrors": [],
+  "skillSelectionDialog": "Fixed path substituted in UI automation; actual directory/ZIP import and Pi loading exercised.",
+  "limits": [
+    "No fresh Windows VM or ZIP repack in this iteration.",
+    "macOS GUI and physical IME candidate window not checked.",
+    "Native Skill file picker interaction not manually checked."
+  ],
+  "focusedHistoryPassed": true,
+  "focusedHistoryChecks": [
+    "恢复历史后的工具默认折叠",
+    "搜索历史、居中确认框、取消保留记录",
+    "删除其他会话保留当前会话",
+    "删除当前会话清理 JSONL、恢复标识与 Pi 进程",
+    "重开空白且不启动 Pi，输入区恢复可用"
+  ],
+  "earlierFullAgentChecksPassed": 13,
+  "lifecycleRecheckError": "Agent 服务已停止（关闭面板后的空闲等待阶段）；最新完整回归未全部通过，原因未确认。",
+  "agentReport": ".artifacts/agent-history-review/report.json",
+  "focusedHistoryReport": ".artifacts/chat-history-final/report.json",
+  "panelChecksSource": "Earlier same-day 14-check panel regression.",
+  "screenshots": [
+    "agent-tool-collapsed-panel.png",
+    "agent-history-panel.png",
+    "agent-delete-panel.png"
+  ],
+  "bashRenderingPassed": true,
+  "bashRenderingChecks": [
+    "Bash 历史结果默认折叠，展开显示多行命令与完整文本输出",
+    "Bash 运行中展示部分输出，完成更新后保留展开和命令",
+    "Bash 失败仍显示命令和错误输出",
+    "Bash 空输出与缺失命令参数明确展示，结果不被丢弃",
+    "Bash 输出原样保留 Base64 外形的文本与长 Unicode 输出"
+  ],
+  "bashRenderingReport": ".artifacts/agent-bash-rendering/report.json"
+}

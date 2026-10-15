@@ -11,6 +11,15 @@ use std::{
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type Preview = (Option<String>, Option<(Vec<u8>, u32, u32)>);
 
+fn export_target(directory: &Path, name: &str, used: &[PathBuf], serial: &mut u64) -> PathBuf {
+    let mut path = directory.join(name);
+    while used.contains(&path) {
+        *serial += 1;
+        path = directory.join(format!("{serial}-{name}"));
+    }
+    path
+}
+
 pub fn bytes_label(bytes: u64) -> String {
     if bytes >= 1024 * 1024 * 1024 {
         format!("{:.1} GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
@@ -29,15 +38,58 @@ pub struct Store {
     pub policy: Policy,
     active: Option<String>,
     warnings: Vec<String>,
+    incoming: Vec<PathBuf>,
+    _lock: fs::File,
 }
 
 impl Store {
+    pub fn view_sources(&self, entry: &Entry) -> Result<Vec<crate::explorer::ViewSource>> {
+        use crate::explorer::ViewSource;
+        let mut output = Vec::new();
+        for (index, item) in entry.items.iter().enumerate() {
+            match item {
+                Item::Text { asset, .. } => output.push(ViewSource::Bytes {
+                    name: format!("文本-{}.txt", index + 1),
+                    bytes: self.read_blob(asset)?,
+                }),
+                Item::Image { asset, .. } => output.push(ViewSource::Bytes {
+                    name: format!("图片-{}.png", index + 1),
+                    bytes: self.read_blob(asset)?,
+                }),
+                Item::Files(files) => {
+                    for file in files {
+                        let path = if file.managed {
+                            self.asset(file.path.to_str().ok_or("文件路径无效")?)?
+                        } else {
+                            file.path.clone()
+                        };
+                        if path.exists() {
+                            output.push(ViewSource::File {
+                                name: file.name.clone(),
+                                path,
+                            });
+                        } else {
+                            output.push(ViewSource::Bytes {
+                                name: format!("{}.失效说明.txt", file.name),
+                                bytes: format!("原文件已不存在：{}", file.path.display())
+                                    .into_bytes(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        Ok(output)
+    }
     pub fn open(directory: &Path, policy: Policy) -> Result<Self> {
-        let root = directory.join("content");
+        Self::open_at(&directory.join("content"), policy)
+    }
+    pub fn open_at(root: &Path, policy: Policy) -> Result<Self> {
         for folder in ["assets", "tmp", "incoming", "exports"] {
             fs::create_dir_all(root.join(folder))?;
         }
         let root = root.canonicalize()?;
+        let lock = crate::safety::lock(&root.join("library.lock"))?;
         let db = Connection::open(root.join("index.sqlite"))?;
         db.busy_timeout(Duration::from_secs(2))?;
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;
@@ -49,11 +101,13 @@ impl Store {
             CREATE TABLE IF NOT EXISTS exports(name TEXT PRIMARY KEY, stamp INTEGER NOT NULL, protected INTEGER NOT NULL DEFAULT 0);
             PRAGMA user_version=1;")?;
         let mut store = Self {
-            root,
+            root: root.clone(),
             db,
             policy,
             active: None,
             warnings: vec![],
+            incoming: vec![root.join("incoming")],
+            _lock: lock,
         };
         // Recover interrupted imports before exposing records to the UI.
         for mut entry in store.all()? {
@@ -70,6 +124,49 @@ impl Store {
         store.clear_folder("incoming")?;
         store.cleanup(crate::safety::timestamp())?;
         Ok(store)
+    }
+
+    pub fn relocate(
+        &mut self,
+        target: &Path,
+        cancel: &AtomicBool,
+        progress: &mut dyn FnMut(&str, u64),
+        commit: impl FnOnce(&Path) -> Result<()>,
+    ) -> Result<PathBuf> {
+        let mut staging = crate::storage::Staging::new(&self.root, target)?;
+        let mut bytes = 0;
+        for name in ["assets", "exports"] {
+            crate::storage::copy_tree(
+                &self.root.join(name),
+                &staging.path.join(name),
+                cancel,
+                &mut bytes,
+                progress,
+            )?;
+        }
+        for name in ["tmp", "incoming"] {
+            fs::create_dir(staging.path.join(name))?;
+        }
+        let database = staging.path.join("index.sqlite");
+        self.db.execute(
+            "VACUUM main INTO ?1",
+            [database.to_str().ok_or("数据库路径无效")?],
+        )?;
+        if cancel.load(Ordering::Acquire) {
+            return Err("目录切换已取消，继续使用原目录".into());
+        }
+        let root = staging.publish()?;
+        let lock = crate::safety::lock(&root.join("library.lock"))?;
+        let db = Connection::open(root.join("index.sqlite"))?;
+        db.busy_timeout(Duration::from_secs(2))?;
+        db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")?;
+        // Until this durable commit succeeds the old database stays authoritative.
+        commit(&root)?;
+        self.db = db;
+        self.root = root.clone();
+        self._lock = lock;
+        self.incoming.push(root.join("incoming"));
+        Ok(root)
     }
 
     fn clear_folder(&self, folder: &str) -> Result<()> {
@@ -469,9 +566,12 @@ impl Store {
             } => {
                 self.warnings.extend(errors);
                 // Only native-owned incoming folders may be removed.
-                let parent = self.root.join("incoming").canonicalize()?;
                 let directory = directory.canonicalize()?;
-                if !directory.starts_with(&parent) || directory == parent {
+                if !self.incoming.iter().any(|parent| {
+                    parent
+                        .canonicalize()
+                        .is_ok_and(|parent| directory.starts_with(&parent) && directory != parent)
+                }) {
                     return Err("临时文件不在接收目录内".into());
                 }
                 if paths
@@ -726,29 +826,64 @@ impl Store {
         cancel: &AtomicBool,
         progress: &mut dyn FnMut(&str, u64),
     ) -> Result<(Vec<PathBuf>, Vec<Payload>)> {
+        let picks = ids
+            .iter()
+            .map(|id| {
+                self.get(id)
+                    .map(|entry| crate::delivery::entry_picks(&entry))
+            })
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        self.export_picks(&picks, cancel, progress)
+    }
+    pub fn export_picks(
+        &mut self,
+        picks: &[crate::delivery::Pick],
+        cancel: &AtomicBool,
+        progress: &mut dyn FnMut(&str, u64),
+    ) -> Result<(Vec<PathBuf>, Vec<Payload>)> {
         progress("正在准备拖出", 0);
         let mut digest = Sha256::new();
-        for id in ids {
-            digest.update(id.as_bytes());
-        }
+        digest.update(serde_json::to_vec(picks)?);
         let name = format!("{:x}", digest.finalize());
         let directory = self.export_dir(&name)?;
         fs::create_dir_all(&directory)?;
         let mut paths = Vec::new();
         let mut payloads = Vec::new();
         let mut serial = 0;
-        for id in ids {
+        for pick in picks {
             if cancel.load(Ordering::Acquire) {
                 return Err("导出准备已取消".into());
             }
-            let entry = self.get(id)?;
-            for item in entry.items {
+            let entry = self.get(&pick.entry)?;
+            let mut item = entry
+                .items
+                .get(pick.item)
+                .cloned()
+                .ok_or("所选内容已失效")?;
+            if let Item::Files(files) = &mut item {
+                let file = files
+                    .get(pick.file.ok_or("请选择具体文件")?)
+                    .cloned()
+                    .ok_or("所选文件已失效")?;
+                *files = vec![file];
+            } else if pick.file.is_some() {
+                return Err("文件选择类型不匹配".into());
+            }
+            for item in [item] {
                 match item {
                     Item::Text {
                         asset, html, rtf, ..
                     } => {
                         let plain = fs::read_to_string(self.asset(&asset)?)?;
-                        let path = directory.join(format!("文本-{}.txt", paths.len() + 1));
+                        let path = export_target(
+                            &directory,
+                            &format!("文本-{}.txt", paths.len() + 1),
+                            &paths,
+                            &mut serial,
+                        );
                         fs::write(&path, plain.as_bytes())?;
                         paths.push(path);
                         payloads.push(Payload::Text {
@@ -758,7 +893,12 @@ impl Store {
                         });
                     }
                     Item::Image { asset, .. } => {
-                        let path = directory.join(format!("图片-{}.png", paths.len() + 1));
+                        let path = export_target(
+                            &directory,
+                            &format!("图片-{}.png", paths.len() + 1),
+                            &paths,
+                            &mut serial,
+                        );
                         fs::copy(self.asset(&asset)?, &path)?;
                         paths.push(path);
                         payloads.push(Payload::Image(fs::read(self.asset(&asset)?)?));
@@ -774,11 +914,7 @@ impl Store {
                                 return Err(format!("原文件已不存在：{}", file.name).into());
                             }
                             let safe_name = safe_filename(&file.name);
-                            let mut target = directory.join(&safe_name);
-                            while paths.contains(&target) {
-                                serial += 1;
-                                target = directory.join(format!("{serial}-{safe_name}"));
-                            }
+                            let target = export_target(&directory, &safe_name, &paths, &mut serial);
                             if !target.exists() {
                                 let mut hash = Sha256::new();
                                 let mut bytes = 0;

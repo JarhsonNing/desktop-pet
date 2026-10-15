@@ -30,6 +30,8 @@ jobs:
           cache-dependency-path: panel/package-lock.json
       - run: npm --prefix panel ci
       - run: npm --prefix panel run build
+      - run: node panel/tests/agent-stream.mjs
+      - run: python -m unittest discover -s scripts -p test_prepare_pi.py
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.99.0
@@ -41,6 +43,8 @@ jobs:
       - run: cargo test --locked --workspace
       - run: cargo run --locked -- --simulate
       - run: cargo build --locked --release --workspace --target ${{ matrix.target }}
+      - run: python scripts/prepare_pi.py --target ${{ matrix.target }} --destination target/${{ matrix.target }}/release/runtime/pi
+      - run: cargo build --locked --release --example agent_mcp_fixture --target ${{ matrix.target }}
       - name: Prepare CI-only Windows software renderer
         if: runner.os == 'Windows'
         shell: pwsh
@@ -72,6 +76,8 @@ jobs:
           $env:MOCHI_TEST_BINARY = 'target/${{ matrix.target }}/release/desktop-pet.exe'
           node panel/tests/native.mjs .artifacts/tauri-demo
           if ($LASTEXITCODE -ne 0) { throw 'Native Tauri UI checks failed' }
+          node panel/tests/agent-native.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Pi RPC and native chat checks failed' }
       - uses: actions/upload-artifact@v4
         with:
           name: Mochi-${{ matrix.target }}
@@ -84,5 +90,7 @@ jobs:
           path: |
             .artifacts/smoke/
             .artifacts/tauri-e2e/
+            .artifacts/agent-e2e/*.png
+            .artifacts/agent-e2e/report.json
           if-no-files-found: warn
 

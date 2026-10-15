@@ -141,6 +141,23 @@ async fn add_files(folder: bool, connection: tauri::State<'_, Arc<Connection>>) 
         .await
 }
 #[tauri::command]
+async fn choose_agent_skill(folder: bool, app: tauri::AppHandle) -> Reply {
+    let window = app.get_webview_window("main").ok_or("面板窗口不可用")?;
+    let path = tauri::async_runtime::spawn_blocking(move || {
+        let dialog = rfd::FileDialog::new()
+            .set_parent(&window)
+            .set_title("安装 Skill");
+        if folder {
+            dialog.pick_folder()
+        } else {
+            dialog.add_filter("Skill ZIP", &["zip"]).pick_file()
+        }
+    })
+    .await
+    .map_err(|_| "无法打开 Skill 选择器")?;
+    Ok(json!(path))
+}
+#[tauri::command]
 async fn choose_skin(folder: bool) -> Reply {
     let path = tauri::async_runtime::spawn_blocking(move || {
         if folder {
@@ -166,6 +183,24 @@ async fn save_content(ids: Vec<String>, connection: tauri::State<'_, Arc<Connect
     connection
         .call("save_content", json!({"ids":ids,"directory":folder}))
         .await
+}
+#[tauri::command]
+async fn choose_storage(kind: String, app: tauri::AppHandle) -> Reply {
+    let title = match kind.as_str() {
+        "content" => "选择空文件夹作为中转站内容库",
+        "explorer" => "选择空文件夹作为 Mochi 文件箱",
+        _ => return Err("未知存储目录类型".into()),
+    };
+    let window = app.get_webview_window("main").ok_or("面板窗口不可用")?;
+    let folder = tauri::async_runtime::spawn_blocking(move || {
+        rfd::FileDialog::new()
+            .set_parent(&window)
+            .set_title(title)
+            .pick_folder()
+    })
+    .await
+    .map_err(|error| error.to_string())?;
+    Ok(json!(folder))
 }
 #[tauri::command]
 fn paste_current(connection: tauri::State<'_, Arc<Connection>>) -> Result<(), String> {
@@ -262,7 +297,8 @@ fn pump(app: &tauri::AppHandle, connection: &Connection) {
                     {
                         let _ = app.emit("skin-drop", json!({"path":paths[0]}));
                     } else {
-                        connection.notify("import", json!({"payloads":payloads}));
+                        connection
+                            .notify("import", json!({"payloads":payloads,"auto_select":true}));
                     }
                 }
                 Event::Hover(value) => {
@@ -275,7 +311,7 @@ fn pump(app: &tauri::AppHandle, connection: &Connection) {
                 Event::ReceiveFinished(id) => {
                     connection.notify("receive_finished", json!({"id":id}))
                 }
-                Event::DragFinished => {
+                Event::DragFinished { .. } => {
                     connection.notify("drag_finish", Value::Null);
                     let _ = app.emit("drag-finished", true);
                 }
@@ -418,6 +454,8 @@ fn main() {
             skin_zone,
             add_files,
             choose_skin,
+            choose_agent_skill,
+            choose_storage,
             save_content,
             paste_current,
             cancel_task,

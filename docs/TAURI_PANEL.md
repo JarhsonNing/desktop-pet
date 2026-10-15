@@ -49,6 +49,8 @@ python scripts/ci_smoke.py --binary target/release/desktop-pet.exe --output .art
 
 `native.mjs` 连接真实 Tauri / WebView2 窗口，要求隔离演示数据库包含中文工作笔记和图片中转记录；不会记录系统剪切板或隐藏真实桌面图标。验证六页导航、中文组合输入、昵称、互动、授权、全文搜索、导出准备、图片和收藏、皮肤加载/重载/错误保留、系统窗口关闭保存草稿、立即重开、收起后宠物存活及进度清理。截图位于 `.artifacts/tauri-e2e`。本次 Windows 验证摘要见 [tauri-windows-verification.json](tauri-windows-verification.json)。
 
+2026-10-15 增加多批拖入默认选择、逐文件修改、收藏选择、清空、过期拖动取消和文件箱开关的实际面板检查，共 13 项通过，见 [文件箱验证记录](filebox-windows-verification.json)。`MOCHI_TEST_OUTPUT` 可指定截图目录，测试应每次使用新建的隔离演示数据目录。
+
 性能脚本使用乖巧模式，关闭剪切板记录和走动，隔离数据与热键；采样首次打开前和三次关闭后，检查每次面板/WebView 进程全部释放，并验证宠物正常退出。结果见 [PERFORMANCE.md](PERFORMANCE.md)。这属于短时对照，不替代长期性能监测；`--seconds 30` 可延长每段采样。
 
 `--screenshot PATH` 在 Windows 使用 WebView2 CapturePreview 获取真实面板画面。`--panel-debug-port PORT` 和 `--control-stdin` 仅用于开发，默认关闭；`--no-shell` 避免测试热键干扰正在运行的宠物。`--legacy-panel` 仅保留旧 egui 面板作开发对照。

@@ -37,6 +37,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --locked --workspace
       - run: cargo build --locked --release --workspace --target ${{ matrix.target }}
+      - run: python scripts/prepare_pi.py --target ${{ matrix.target }} --destination target/${{ matrix.target }}/release/runtime/pi
       - run: python scripts/package.py --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:

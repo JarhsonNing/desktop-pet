@@ -21,7 +21,9 @@ pub enum Event {
     Hover(bool),
     Access(String),
     Error(String),
-    DragFinished,
+    DragFinished {
+        accepted: bool,
+    },
     OwnershipLost,
     Receiving {
         id: String,
@@ -33,6 +35,14 @@ pub enum Event {
 
 pub struct Events {
     pub receiver: mpsc::Receiver<Event>,
+}
+
+fn incoming_directory(data: &std::path::Path) -> std::io::Result<PathBuf> {
+    // Read only for a new drop; an atomic settings switch also reaches the
+    // separately hosted panel without rebinding either native window.
+    Ok(crate::storage::Settings::load(data)?
+        .content(data)
+        .join("incoming"))
 }
 
 pub fn clipboard_uses_files(payloads: &[Payload]) -> bool {

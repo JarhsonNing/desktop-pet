@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tomllib
 import zipfile
+from prepare_pi import prepare
 
 
 def main():
@@ -44,6 +45,7 @@ def main():
         (contents / "MacOS").mkdir(parents=True)
         resources = contents / "Resources"
         resources.mkdir()
+        prepare(arguments.target, resources / "runtime/pi")
         shutil.copy2(binary, contents / "MacOS" / "desktop-pet")
         shutil.copy2(panel_binary, contents / "MacOS" / panel_name)
         icon = root / "assets" / "Mochi.icns"
@@ -62,6 +64,7 @@ def main():
             plistlib.dump(metadata, destination)
         subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(application)], check=True)
     else:
+        prepare(arguments.target, staging / "runtime/pi")
         shutil.copy2(binary, staging / "Mochi.exe")
         shutil.copy2(panel_binary, staging / panel_name)
         (staging / "Restore-Desktop.cmd").write_text('@echo off\r\n"%~dp0Mochi.exe" --restore-desktop\r\n', encoding="utf-8")
@@ -69,8 +72,24 @@ def main():
     skin_output.mkdir()
     for skin_name in ["default", "blue", "png"]:
         subprocess.run([str(binary), "--pack-skin", str(root / "skins" / skin_name), "--output", str(skin_output / f"{skin_name}.mochi")], check=True)
-    sources = ["README.md", "LICENSE", "docs/RECOVERY.md", "docs/SKINS.md", "docs/SKIN_SKILL.md", "docs/CONTENT.md", "docs/TAURI_PANEL.md", "docs/ARCHITECTURE.md", "docs/PERFORMANCE.md", "docs/TESTING.md", "docs/tauri-windows-verification.json", "assets/FONT-LICENSE.txt"]
+    sources = ["README.md", "LICENSE", "docs/RECOVERY.md", "docs/SKINS.md", "docs/SKIN_SKILL.md", "docs/CONTENT.md", "docs/FILEBOX.md", "docs/AGENT.md", "docs/TAURI_PANEL.md", "docs/ARCHITECTURE.md", "docs/PERFORMANCE.md", "docs/TESTING.md", "docs/tauri-windows-verification.json", "assets/FONT-LICENSE.txt"]
     sources.extend(str(path.relative_to(root)) for path in (root / "docs").glob("*-panel.png"))
+    sources.append("docs/filebox-windows-verification.json")
+    sources.append("docs/storage-windows-verification.json")
+    sources.append("docs/pi-windows-verification.json")
+    sources.append("docs/agent-home-windows-verification.json")
+    # Preserve notices for the project-owned chat sources and their dependencies.
+    chat_notices = root / "panel/src/agent/ui"
+    for name in ("LICENSE", "README.md"):
+        destination = staging / "ThirdParty/mochi-chat-ui" / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(chat_notices / name, destination)
+    modules = root / "panel/node_modules"
+    for notice in modules.rglob("*"):
+        if notice.is_file() and notice.name.lower().startswith(("license", "licence", "copying", "notice")):
+            destination = staging / "ThirdParty" / notice.relative_to(modules)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(notice, destination)
     for source in sources:
         destination = staging / source
         destination.parent.mkdir(parents=True, exist_ok=True)

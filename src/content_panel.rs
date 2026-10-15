@@ -65,6 +65,23 @@ pub struct ContentPanel {
     web_pending: HashMap<String, Vec<u64>>,
     web_exports: HashMap<String, Vec<(u64, WebOperation)>>,
     web_receivers: BTreeSet<String>,
+    pub delivery: desktop_pet::delivery::Delivery,
+    delivery_path: PathBuf,
+    delivery_waiting: BTreeSet<String>,
+    delivery_serial: u64,
+    delivery_key: String,
+    delivery_export: Option<Export>,
+    delivery_active: bool,
+    delivery_error: Option<String>,
+    delivery_writable: bool,
+    explorer: serde_json::Value,
+    explorer_enabled: bool,
+    data_directory: PathBuf,
+    storage: desktop_pet::storage::Settings,
+    storage_busy: bool,
+    storage_error: Option<String>,
+    storage_pending: Option<u64>,
+    storage_available: bool,
 }
 impl ContentPanel {
     pub fn new(
@@ -73,10 +90,25 @@ impl ContentPanel {
         config: &Config,
     ) -> Self {
         let context = creation.egui_ctx.clone();
+        let (storage, storage_error) = match desktop_pet::storage::Settings::load(&directory) {
+            Ok(settings) => (settings, None),
+            Err(error) => (Default::default(), Some(error.to_string())),
+        };
         let service = Service::start(directory.clone(), policy(config), move || {
             context.request_repaint_of(egui::ViewportId::ROOT)
         });
-        let (bridge, events) = Bridge::new(creation, directory, config.clipboard_enabled);
+        service.explorer(config.explorer_enabled, false);
+        let delivery_path = directory.join("delivery-state.json");
+        let (delivery, delivery_error) = match desktop_pet::delivery::Delivery::load(&delivery_path)
+        {
+            Ok(state) => (state, None),
+            Err(error) => (
+                Default::default(),
+                Some(format!("投递状态无法读取，已保留原文件：{error}")),
+            ),
+        };
+        let delivery_writable = delivery_error.is_none();
+        let (bridge, events) = Bridge::new(creation, directory.clone(), config.clipboard_enabled);
         bridge.quota(policy(config).quota);
         Self {
             service,
@@ -109,6 +141,23 @@ impl ContentPanel {
             web_pending: HashMap::new(),
             web_exports: HashMap::new(),
             web_receivers: BTreeSet::new(),
+            delivery,
+            delivery_path: delivery_path.clone(),
+            delivery_waiting: BTreeSet::new(),
+            delivery_serial: 0,
+            delivery_key: String::new(),
+            delivery_export: None,
+            delivery_active: false,
+            delivery_error,
+            delivery_writable,
+            explorer: serde_json::json!({"root":storage.explorer(&directory),"bytes":0,"error":null}),
+            explorer_enabled: config.explorer_enabled,
+            data_directory: directory,
+            storage,
+            storage_busy: false,
+            storage_error,
+            storage_pending: None,
+            storage_available: true,
         }
     }
     pub fn poll(&mut self, context: &egui::Context, now: f64) -> Vec<Drop> {
@@ -117,7 +166,8 @@ impl ContentPanel {
             self.windows_at = now + 0.5;
         }
         let mut drops = Vec::new();
-        for event in self.events.receiver.try_iter() {
+        let native_events: Vec<_> = self.events.receiver.try_iter().collect();
+        for event in native_events {
             match event {
                 native_content::Event::Clipboard(payloads) => {
                     self.access = None;
@@ -135,8 +185,21 @@ impl ContentPanel {
                 native_content::Event::Hover(value) => self.receiving = value,
                 native_content::Event::Access(error) => self.access = Some(error),
                 native_content::Event::Error(error) => self.message = Some(error),
-                native_content::Event::DragFinished => {
+                native_content::Event::DragFinished { accepted } => {
                     self.dragging = false;
+                    if self.delivery_active {
+                        self.delivery_active = false;
+                        self.delivery.finish(accepted);
+                        self.delivery_changed();
+                        self.message = Some(
+                            if accepted {
+                                "已交给目标应用，中转原记录仍保留。"
+                            } else {
+                                "已取消或目标未接收，已保留所选文件。"
+                            }
+                            .into(),
+                        );
+                    }
                     if !self.clipboard_lease {
                         self.service.release_exports();
                     }
@@ -158,8 +221,58 @@ impl ContentPanel {
         let events = self.service.receiver.try_iter().collect::<Vec<_>>();
         for event in events {
             match event {
+                Event::Storage {
+                    settings,
+                    error,
+                    completed,
+                } => {
+                    self.storage = settings;
+                    self.storage_error = error.clone();
+                    if !completed && error.is_some() {
+                        self.storage_available = false;
+                        self.access = error.clone();
+                        self.bridge.enabled(false);
+                    }
+                    if completed {
+                        self.storage_busy = false;
+                        if let Some(request) = self.storage_pending.take() {
+                            self.web_reply(match &error {
+                                Some(error) => Message::error(request, error),
+                                None => Message::result(request, serde_json::json!(true)),
+                            });
+                        }
+                        if error.is_none() {
+                            self.export = None;
+                            self.delivery_changed();
+                            self.message =
+                                Some("存储目录已切换，旧目录保留，可在确认后自行清理。".into());
+                        }
+                    }
+                    self.explorer["root"] =
+                        serde_json::json!(self.storage.explorer(&self.data_directory));
+                }
+                Event::Explorer { root, bytes, error } => {
+                    self.explorer = serde_json::json!({"root":root,"bytes":bytes,"error":error});
+                }
                 Event::Snapshot(snapshot) => {
                     self.snapshot = snapshot;
+                    let before = self.delivery.selected.clone();
+                    let completed = !self.delivery_waiting.is_empty();
+                    for id in std::mem::take(&mut self.delivery_waiting) {
+                        if let Some(entry) =
+                            self.snapshot.transfer.iter().find(|entry| entry.id == id)
+                        {
+                            self.delivery.completed(&id, entry);
+                        }
+                    }
+                    self.delivery.reconcile(&self.snapshot);
+                    if self.delivery.selected != before
+                        || self.delivery_key.is_empty() && !self.delivery.selected.is_empty()
+                    {
+                        self.delivery_changed();
+                    } else if completed {
+                        self.persist_delivery();
+                    }
                     for source in [Source::Clipboard, Source::Transfer] {
                         let index = index(source);
                         if !self.queries[index].is_empty() {
@@ -171,6 +284,9 @@ impl ContentPanel {
                     self.progress.insert(id, (label, bytes));
                 }
                 Event::Completed { id, source, count } => {
+                    if source == Source::Transfer {
+                        self.delivery_waiting.insert(id.clone());
+                    }
                     self.service.completed(&id);
                     self.progress.remove(&id);
                     if source == Source::Transfer {
@@ -203,6 +319,17 @@ impl ContentPanel {
                     files,
                     payloads,
                 } => {
+                    if id.starts_with("pet-delivery-") {
+                        if id == self.delivery_key {
+                            self.delivery_error = None;
+                            self.delivery_export = Some(Export {
+                                key: id,
+                                files,
+                                payloads,
+                            });
+                        }
+                        continue;
+                    }
                     if let Some(operations) = self.web_exports.remove(&id) {
                         for (request, operation) in operations {
                             match operation {
@@ -289,6 +416,16 @@ impl ContentPanel {
                     });
                 }
                 Event::Finished(id) => {
+                    if !self.delivery_waiting.contains(&id) && self.delivery.forget_task(&id) {
+                        self.persist_delivery();
+                    }
+                    if id == self.delivery_key && self.delivery_export.is_none() {
+                        self.delivery_error = Some(
+                            self.message
+                                .clone()
+                                .unwrap_or_else(|| "文件准备失败，请重新选择或重试".into()),
+                        );
+                    }
                     self.service.completed(&id);
                     self.progress.remove(&id);
                 }
@@ -312,6 +449,7 @@ impl ContentPanel {
     }
     pub fn detach_panel(&mut self) {
         self.web_sender = None;
+        self.storage_pending = None;
         self.web_pending.clear();
         self.web_exports.clear();
         for id in std::mem::take(&mut self.web_receivers) {
@@ -319,8 +457,8 @@ impl ContentPanel {
             self.message = Some("面板已关闭，未完成的附件接收已取消。".into());
         }
         self.receiving = false;
-        self.dragging = false;
-        if !self.clipboard_lease {
+        self.dragging = self.delivery_active;
+        if !self.clipboard_lease && !self.delivery_active {
             self.service.release_exports();
         }
     }
@@ -337,10 +475,14 @@ impl ContentPanel {
         self.selection.insert(id.into());
     }
     pub fn web_snapshot(&self) -> serde_json::Value {
-        serde_json::json!({"records":self.snapshot,"progress":self.progress,"access":self.access,"message":self.message,"selected":self.web_selection()})
+        serde_json::json!({"records":self.snapshot,"progress":self.progress,"access":self.access,"message":self.message,"selected":self.web_selection(),"explorer":self.explorer,"storage":{"content":desktop_pet::storage::display(&self.storage.content(&self.data_directory)),"explorer":desktop_pet::storage::display(&self.storage.explorer(&self.data_directory)),"busy":self.storage_busy,"error":self.storage_error},"delivery":{"choices":self.delivery.choices(&self.snapshot),"count":self.delivery.selected.len(),"ready":self.delivery_export.is_some(),"active":self.delivery_active,"error":self.delivery_error}})
     }
     pub fn web_command(&mut self, request: &Request) -> Result<bool, String> {
         let args = &request.args;
+        if self.storage_busy && matches!(request.command.as_str(), "drag_start" | "delivery_begin")
+        {
+            return Err("目录切换中，请稍后再拖出文件".into());
+        }
         let ids = || -> Result<Vec<String>, String> {
             let ids: Vec<String> =
                 serde_json::from_value(args["ids"].clone()).map_err(|e| e.to_string())?;
@@ -350,6 +492,65 @@ impl ContentPanel {
             Ok(ids)
         };
         match request.command.as_str() {
+            "storage_move" => {
+                if self.storage_busy
+                    || self.dragging
+                    || self.receiving
+                    || !self.web_receivers.is_empty()
+                {
+                    return Err("正在接收、拖出或切换目录，请稍后再试".into());
+                }
+                let kind = args["kind"].as_str().ok_or("缺少目录类型")?;
+                if !matches!(kind, "content" | "explorer") {
+                    return Err("未知存储目录类型".into());
+                }
+                let target = PathBuf::from(args["path"].as_str().ok_or("请选择目录")?);
+                self.service.move_storage(kind, target)?;
+                self.storage_busy = true;
+                self.storage_error = None;
+                self.storage_pending = Some(request.id);
+                self.progress
+                    .insert("storage-move".into(), ("正在准备切换存储目录".into(), 0));
+                return Ok(false);
+            }
+            "explorer_refresh" => {
+                if !self.explorer_enabled {
+                    return Err("请先启用此电脑文件入口".into());
+                }
+                self.service.explorer(true, true);
+            }
+            "explorer_open" => {
+                let path = self.explorer["root"].as_str().ok_or("文件箱尚未准备")?;
+                if !std::path::Path::new(path).is_dir() {
+                    return Err("请先启用此电脑文件入口".into());
+                }
+                #[cfg(windows)]
+                {
+                    use std::os::windows::process::CommandExt;
+                    std::process::Command::new("explorer.exe")
+                        .arg(path)
+                        .creation_flags(0x08000000)
+                        .spawn()
+                        .map_err(|error| error.to_string())?;
+                }
+            }
+            "delivery_select" => {
+                if !self.delivery_writable {
+                    return Err(
+                        "投递状态无法读取，请先检查 delivery-state.json；原文件未覆盖".into(),
+                    );
+                }
+                if self.delivery_active {
+                    return Err("正在投递，请稍候".into());
+                }
+                let picks = serde_json::from_value(args["picks"].clone())
+                    .map_err(|error| error.to_string())?;
+                self.delivery.set(picks, &self.snapshot);
+                self.delivery_changed();
+            }
+            "delivery_begin" => {
+                self.start_delivery()?;
+            }
             "preview" => {
                 let id = args["id"].as_str().ok_or("Missing record id")?;
                 self.web_pending
@@ -406,7 +607,11 @@ impl ContentPanel {
             "import" => {
                 let payloads: Vec<Payload> =
                     serde_json::from_value(args["payloads"].clone()).map_err(|e| e.to_string())?;
-                self.receive(payloads);
+                if args["auto_select"].as_bool().unwrap_or(false) {
+                    self.receive_drop(payloads);
+                } else {
+                    self.receive(payloads);
+                }
             }
             "cancel" => {
                 let id = args["id"].as_str().ok_or("Missing task id")?;
@@ -449,12 +654,92 @@ impl ContentPanel {
         Ok(true)
     }
     pub fn configure(&mut self, config: &Config) {
-        self.bridge.enabled(config.clipboard_enabled);
+        if config.explorer_enabled != self.explorer_enabled {
+            self.explorer_enabled = config.explorer_enabled;
+            self.service.explorer(config.explorer_enabled, false);
+        }
+        self.bridge
+            .enabled(config.clipboard_enabled && self.storage_available);
         self.bridge.quota(policy(config).quota);
         self.service.policy(policy(config));
     }
     pub fn receive(&mut self, payloads: Vec<Payload>) {
+        if !self.storage_available {
+            self.message = Some("内容库不可用，未收纳内容，请检查存储目录并重启。".into());
+            return;
+        }
         self.service.import(Source::Transfer, payloads);
+    }
+    pub fn receive_drop(&mut self, payloads: Vec<Payload>) {
+        if !self.storage_available {
+            self.message = Some("内容库不可用，未收纳内容，请检查存储目录并重启。".into());
+            return;
+        }
+        let task = self.service.import(Source::Transfer, payloads);
+        if self.delivery_writable {
+            self.delivery.capture(task);
+            self.persist_delivery();
+        }
+    }
+    fn persist_delivery(&mut self) -> bool {
+        if !self.delivery_writable {
+            return false;
+        }
+        if let Err(error) = desktop_pet::config::atomic_json(&self.delivery_path, &self.delivery) {
+            self.message = Some(format!("投递选择保存失败：{error}"));
+            return false;
+        }
+        true
+    }
+    fn delivery_changed(&mut self) {
+        if !self.delivery_key.is_empty() {
+            self.service.cancel(&self.delivery_key);
+        }
+        self.delivery_export = None;
+        self.delivery_error = None;
+        self.delivery_serial += 1;
+        self.delivery_key = format!("pet-delivery-{}", self.delivery_serial);
+        self.persist_delivery();
+        if !self.delivery.selected.is_empty() {
+            self.service.export_picks(
+                self.delivery_key.clone(),
+                self.delivery.selected.iter().cloned().collect(),
+            );
+        }
+    }
+    pub fn start_delivery(&mut self) -> Result<(), String> {
+        if self.storage_busy {
+            return Err("目录切换中，请稍后再投递".into());
+        }
+        if !self.delivery_writable {
+            return Err("投递状态无法读取，暂不能投递".into());
+        }
+        if self.delivery_active {
+            return Err("正在投递，请稍候".into());
+        }
+        let export = self
+            .delivery_export
+            .as_ref()
+            .ok_or("文件正在准备，请稍后再拖动")?;
+        let before = self.delivery.clone();
+        self.delivery.begin().map_err(str::to_owned)?;
+        let files = export.files.clone();
+        let payloads = export.payloads.clone();
+        if !self.persist_delivery() {
+            self.delivery = before;
+            return Err("投递选择无法保存，已保留当前批次".into());
+        }
+        self.service.protect_exports(files.clone());
+        self.delivery_active = true;
+        self.dragging = true;
+        if let Err(error) = self.bridge.drag(files, payloads) {
+            self.delivery_active = false;
+            self.dragging = false;
+            self.delivery.finish(false);
+            self.persist_delivery();
+            return Err(error);
+        }
+        Ok(())
     }
     pub fn stop(&mut self) {
         self.bridge.stop();

@@ -1,5 +1,7 @@
 # 剪切板历史与文件中转站
 
+桌宠多批文件投递、逐文件选择与 Windows「此电脑」文件箱见 [FILEBOX.md](FILEBOX.md)。文件箱首版仅展示，不从资源管理器写回内容库。
+
 ## 使用
 
 面板左栏或托盘打开「剪切板」「中转站」，也可使用 `--settings-page clipboard|transfer`。两个页面提供搜索、类型筛选、收藏和详情；按住 Ctrl（macOS 为 Command）点击记录可多选，批量复制、另存、收藏或删除。
@@ -36,6 +38,8 @@ Windows 接收 OLE 文件描述符和内容流，并在拖放仍有效时读取�
 ## 保存位置与清理
 
 使用本机应用数据目录，Windows 默认 `%LOCALAPPDATA%\JarhsonNing\Mochi\data`；macOS 使用 `directories::ProjectDirs` 对应的用户应用数据目录。开发时 `--data-dir PATH` 可指定隔离位置。
+
+可在偏好设置中分别更换「中转站存储目录」和「Mochi 文件箱目录」，后台复制完成后立即生效，原目录保留。剪切板与中转站共用内容库，因此会一起迁移。自选路径保存于 `storage.json`；以下 `content/` 为默认位置，自选后该目录中的数据库、资源、附件接收和导出缓存均位于用户选择的位置。详见 [目录切换说明](FILEBOX.md#自定义存储目录)。
 
 ```text
 config.json              记录开关、保留策略、空间限额、下载开关

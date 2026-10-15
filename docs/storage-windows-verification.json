@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-15",
+  "platform": "Windows x64 / Tauri / WebView2",
+  "release_workspace_tests": 91,
+  "clippy_all_targets": "passed",
+  "fmt": "passed",
+  "vue_typescript_build": "passed",
+  "native_ui": {
+    "passed": true,
+    "checks": [
+      "原生目录选择器属于当前面板，取消后目录不变",
+      "偏好中可分别选择两个目录，内容库迁移保留记录和独立副本",
+      "非空目录切换被拒绝，用户文件与当前库不变",
+      "文件箱目录独立迁移，旧副本保留且后续记录只更新新位置",
+      "重启后两个自选目录及历史仍有效"
+    ]
+  },
+  "coverage": [
+    "Native folder picker ownership and cancellation",
+    "SQLite snapshot and shared asset migration",
+    "Cancelled and failed operations preserve source",
+    "Nonempty and nested destinations rejected",
+    "Old and new incoming attachments survive a switch",
+    "This PC entry moves and crash journal restores active entry",
+    "Selected directories persist across process restart",
+    "Unavailable custom library does not silently create an empty database"
+  ],
+  "limitations": [
+    "Migration destinations in the end-to-end test are supplied through real IPC; OS picker cancellation and ownership are tested separately",
+    "macOS checks not run at user request"
+  ]
+}

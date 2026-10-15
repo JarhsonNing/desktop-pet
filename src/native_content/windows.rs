@@ -100,7 +100,7 @@ impl Bridge {
         let shared = Arc::new(Shared {
             sender,
             context,
-            directory: directory.join("content/incoming"),
+            directory,
             enabled: AtomicBool::new(enabled),
             alive: AtomicBool::new(true),
             ignore: AtomicU32::new(0),
@@ -381,6 +381,13 @@ unsafe extern "system" fn window_proc(
         let binding = unsafe { &*(data as *const Binding) };
         let drag = binding.drag.borrow_mut().take();
         if let Some((files, payloads)) = drag {
+            // A fast release may arrive before our posted message. Entering OLE
+            // without a held button can strand its modal loop until new input.
+            if !super::mouse_pressed() {
+                binding.shared.emit(Event::DragFinished { accepted: false });
+                return LRESULT(0);
+            }
+            let mut accepted = false;
             match outgoing(&files, &payloads) {
                 Ok(formats) => {
                     let object: IDataObject = DataObject { formats }.into();
@@ -388,6 +395,7 @@ unsafe extern "system" fn window_proc(
                     let mut effect = DROPEFFECT_NONE;
                     unsafe {
                         let result = DoDragDrop(&object, &source, DROPEFFECT_COPY, &mut effect);
+                        accepted = result == DRAGDROP_S_DROP && effect == DROPEFFECT_COPY;
                         if result.is_err() {
                             binding
                                 .shared
@@ -397,7 +405,7 @@ unsafe extern "system" fn window_proc(
                 }
                 Err(e) => binding.shared.emit(Event::Error(format!("拖出失败：{e}"))),
             }
-            binding.shared.emit(Event::DragFinished);
+            binding.shared.emit(Event::DragFinished { accepted });
         }
         return LRESULT(0);
     }
@@ -932,13 +940,15 @@ fn virtual_files(object: &IDataObject, shared: &Shared) -> ::windows::core::Resu
         }
         names.push(path);
     }
-    std::fs::create_dir_all(&shared.directory).map_err(|_| ::windows::core::Error::from_win32())?;
+    let incoming = super::incoming_directory(&shared.directory)
+        .map_err(|_| ::windows::core::Error::from_win32())?;
+    std::fs::create_dir_all(&incoming).map_err(|_| ::windows::core::Error::from_win32())?;
     let id = format!(
         "attachment-{}-{}",
         crate::safety::timestamp(),
         NEXT_INCOMING.fetch_add(1, Ordering::Relaxed)
     );
-    let directory = shared.directory.join(&id);
+    let directory = incoming.join(&id);
     std::fs::create_dir(&directory).map_err(|_| ::windows::core::Error::from_win32())?;
     let cancel = Arc::new(AtomicBool::new(false));
     if let Ok(mut jobs) = shared.jobs.lock() {

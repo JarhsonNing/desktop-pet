@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import Icon from "./Icon.vue";
+import AgentChat from "./AgentChat.vue";
+import AgentPreferences from "./AgentPreferences.vue";
 import { call, invoke, listen } from "./bridge";
 
 type Source = "Clipboard" | "Transfer";
@@ -36,6 +38,16 @@ type Config = {
   clipboard_limit: number;
   content_quota_gib: number;
   download_dropped_resources: boolean;
+  explorer_enabled: boolean;
+};
+type Pick = { entry: string; item: number; file: number | null };
+type Choice = {
+  pick: Pick;
+  name: string;
+  favorite: boolean;
+  directory: boolean;
+  selected: boolean;
+  recent: boolean;
 };
 type Snapshot = {
   config: Config;
@@ -58,11 +70,21 @@ type Snapshot = {
     access: string | null;
     message: string | null;
     selected: string[];
+    delivery: {
+      choices: Choice[];
+      count: number;
+      ready: boolean;
+      active: boolean;
+      error: string | null;
+    };
+    explorer: { root: string; bytes: number; error: string | null };
+    storage: { content: string; explorer: string; busy: boolean; error: string | null };
   };
   page: number;
   platform: string;
   data_dir: string;
   version: string;
+  delivery_picker: boolean;
 };
 type Prepared = { files: string[]; payloads: unknown[] };
 const pages = [
@@ -102,7 +124,63 @@ const pages = [
     title: "东西先交给我",
     subtitle: "暂存想留住的内容，再带到需要它的地方。",
   },
+  { name: "Agent 设置", icon: "sparkles", title: "让麻薯更懂你", subtitle: "管理模型、工具连接和 Skills。" },
 ];
+const agentTab = ref("models");
+async function agentSettings(tab = "models") { agentTab.value = tab; await navigate(6); }
+const deliveryOpen = ref(false),
+  deliveryDraft = ref<Pick[]>([]),
+  deliveryTab = ref("recent"),
+  deliverySearch = ref("");
+const storageChoosing = ref(false);
+const pickKey = (pick: Pick) =>
+  JSON.stringify([pick.entry, pick.item, pick.file]);
+let deliverySeen = new Set<string>();
+const deliveryChoices = computed(() =>
+  (snapshot.value?.content.delivery.choices ?? []).filter(
+    (choice) =>
+      (deliveryTab.value === "all" ||
+        (deliveryTab.value === "favorites" && choice.favorite) ||
+        (deliveryTab.value === "recent" &&
+          (choice.recent || choice.selected))) &&
+      choice.name.toLowerCase().includes(deliverySearch.value.toLowerCase()),
+  ),
+);
+function showDelivery() {
+  deliverySeen = new Set(
+    (snapshot.value?.content.delivery.choices ?? []).map((choice) =>
+      pickKey(choice.pick),
+    ),
+  );
+  deliveryDraft.value = (snapshot.value?.content.delivery.choices ?? [])
+    .filter((choice) => choice.selected)
+    .map((choice) => choice.pick);
+  deliveryTab.value = deliveryDraft.value.length ? "recent" : "favorites";
+  deliveryOpen.value = true;
+  void call("delivery_picker", { open: false });
+}
+async function openDelivery() {
+  await refresh();
+  if (!deliveryOpen.value) showDelivery();
+}
+function togglePick(pick: Pick) {
+  const key = pickKey(pick);
+  deliveryDraft.value = deliveryDraft.value.some(
+    (value) => pickKey(value) === key,
+  )
+    ? deliveryDraft.value.filter((value) => pickKey(value) !== key)
+    : [...deliveryDraft.value, pick];
+}
+async function applyDelivery() {
+  if (await act("delivery_select", { picks: deliveryDraft.value })) {
+    deliveryOpen.value = false;
+    showToast(
+      deliveryDraft.value.length
+        ? "已选择待发送文件。准备完成后按住 Alt 拖动桌宠投递，普通拖动用于搬家。"
+        : "已清空待发送文件。",
+    );
+  }
+}
 const snapshot = ref<Snapshot | null>(null),
   page = ref(0),
   avatar = ref(""),
@@ -155,18 +233,6 @@ const canTake = computed(
 const tasks = computed(() =>
   Object.entries(snapshot.value?.content.progress ?? {}),
 );
-const moods: Record<string, string> = {
-  Idle: "今天也想陪着你",
-  Happy: "心情很好，想贴贴",
-  Grumpy: "有一点点小脾气",
-  Sleep: "正在闭眼休息",
-  Dragged: "被你拎起来了",
-  Play: "玩得很开心",
-  Chase: "在追逐光标",
-  Hiding: "在和你捉迷藏",
-  Dizzy: "有一点晕乎乎",
-  Walk: "正在悠闲散步",
-};
 const kindLabels: Record<string, string> = {
   text: "文本",
   link: "链接",
@@ -216,7 +282,20 @@ async function refresh() {
   if (stopped) return;
   try {
     const value = await call<Snapshot>("snapshot");
+    if (deliveryOpen.value) {
+      const choices = value.content.delivery.choices;
+      const valid = new Set(choices.map((choice) => pickKey(choice.pick)));
+      deliveryDraft.value = deliveryDraft.value.filter((pick) =>
+        valid.has(pickKey(pick)),
+      );
+      for (const choice of choices) {
+        if (choice.selected && !deliverySeen.has(pickKey(choice.pick)))
+          deliveryDraft.value.push(choice.pick);
+      }
+      deliverySeen = valid;
+    }
     snapshot.value = value;
+    if (value.delivery_picker && !deliveryOpen.value) showDelivery();
     fatal.value = "";
     const key = JSON.stringify([value.skin.id, value.skin_path]);
     if (key !== lastAvatar) {
@@ -440,6 +519,22 @@ async function registerZone() {
     rect: rect ? [rect.x, rect.y, rect.width, rect.height] : null,
   }).catch(() => {});
 }
+async function chooseStorage(kind: "content" | "explorer") {
+  storageChoosing.value = true;
+  try {
+    const path = await invoke<string | null>("choose_storage", { kind });
+    if (!path) return;
+    prepared.value = null;
+    showToast("正在复制到新目录，原目录会保留…");
+    await call("storage_move", { kind, path });
+    await refresh();
+    showToast("目录已切换，已有内容已复制，原目录保留。");
+  } catch (error) {
+    showToast(String(error));
+  } finally {
+    storageChoosing.value = false;
+  }
+}
 async function addFiles(folder = false) {
   try {
     await invoke("add_files", { folder });
@@ -534,7 +629,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'drop-active': dropHover }">
+  <div class="app-shell" :class="{ 'drop-active': dropHover, 'chat-home': page === 0 }">
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark"><Icon name="sparkles" :size="25" /></div>
@@ -566,12 +661,12 @@ onUnmounted(() => {
         <span><i class="status-dot" /> 原生宠物正在运行</span>
       </div>
       <div class="sidebar-footer">
-        <Icon name="shield" :size="15" /><span>本地保存 · 不上传</span
+        <Icon name="shield" :size="15" /><span>本地保存 · 按需连接</span
         ><small>v{{ snapshot?.version ?? "0.1.0" }}</small>
       </div>
     </aside>
     <section class="workspace">
-      <header class="page-header">
+      <header v-if="page !== 0" class="page-header">
         <div>
           <span class="eyebrow">{{ pages[page]?.name }} / MOCHI</span>
           <h1>{{ pages[page]?.title }}</h1>
@@ -581,144 +676,20 @@ onUnmounted(() => {
           <Icon name="close" :size="16" /> 收起面板
         </button>
       </header>
-      <main class="page-body" @scroll="registerZone">
+      <main class="page-body" :class="{ 'home-body': page === 0 }" @scroll="registerZone">
         <div v-if="fatal" class="alert error">
           <Icon name="shield" />{{ fatal }}
         </div>
-        <div v-if="snapshot?.status" class="alert subtle">
+        <div v-if="snapshot?.status && page !== 0" class="alert subtle">
           {{ snapshot.status }}
         </div>
         <template v-if="snapshot">
           <template v-if="page === 0">
-            <div class="hero-card">
-              <div class="hero-copy">
-                <span class="pill warm"
-                  ><Icon name="heart" :size="14" /> 你的专属伙伴</span
-                >
-                <h2>
-                  你好呀，<br />我是{{ snapshot.config.name
-                  }}<span class="wave">✦</span>
-                </h2>
-                <p>
-                  {{
-                    moods[snapshot.mood] ?? "今天也想陪着你"
-                  }}。<br />一起把普通的日子，过得可爱一点。
-                </p>
-                <button
-                  class="button primary"
-                  @click="act('interact', { action: 'pet' }, '已经摸摸它啦。')"
-                >
-                  <Icon name="heart" :size="17" /> 摸摸头
-                </button>
-              </div>
-              <div class="hero-art">
-                <div class="orbit one" />
-                <div class="orbit two" />
-                <img v-if="avatar" :src="avatar" alt="当前桌宠" /><span
-                  class="hero-bubble"
-                  >{{
-                    snapshot.quiet ? "我会安静陪着你。" : "今天也请多关照呀！"
-                  }}</span
-                >
-              </div>
-            </div>
-            <div class="stats-grid">
-              <div class="stat-card">
-                <span><Icon name="heart" />亲密度</span
-                ><strong
-                  >{{ snapshot.config.affinity }}<small>/ 100</small></strong
-                >
-                <div class="meter">
-                  <i :style="{ width: snapshot.config.affinity + '%' }" />
-                </div>
-              </div>
-              <div class="stat-card">
-                <span><Icon name="sparkles" />一起互动</span
-                ><strong
-                  >{{ snapshot.config.interactions }}<small>次</small></strong
-                >
-                <p>每一次靠近，它都记得</p>
-              </div>
-              <div class="stat-card">
-                <span><Icon name="play" />投喂的小饼干</span
-                ><strong>{{ snapshot.config.feeds }}<small>颗</small></strong>
-                <p>把快乐攒成满满一口袋</p>
-              </div>
-            </div>
-            <div class="section-title">
-              <h3>今天想做点什么？</h3>
-              <span>小小的互动，也会让它开心</span>
-            </div>
-            <div class="interaction-grid">
-              <button @click="act('interact', { action: 'feed' })">
-                <span class="interaction-icon peach"
-                  ><Icon name="heart" :size="23" /></span
-                ><strong>投喂一块饼干</strong><small>分享一点甜甜的快乐</small
-                ><Icon name="arrow" /></button
-              ><button @click="act('interact', { action: 'play' })">
-                <span class="interaction-icon lilac"
-                  ><Icon name="play" :size="23" /></span
-                ><strong>一起玩球</strong><small>让它蹦蹦跳跳起来</small
-                ><Icon name="arrow" /></button
-              ><button @click="act('interact', { action: 'busy' })">
-                <span class="interaction-icon sage"
-                  ><Icon name="moon" :size="23" /></span
-                ><strong>我在忙</strong><small>安静陪伴 30 分钟</small
-                ><Icon name="arrow" />
-              </button>
-            </div>
-            <div class="card compact">
-              <div class="inline-row">
-                <div>
-                  <h3>按自己的节奏相处</h3>
-                  <p>
-                    {{
-                      snapshot.busy_seconds
-                        ? `忙碌陪伴还剩 ${Math.ceil(snapshot.busy_seconds / 60)} 分钟`
-                        : "左键摸摸 · 双击戳戳 · 拖动拎起来"
-                    }}
-                  </p>
-                </div>
-                <div class="actions">
-                  <button
-                    class="button"
-                    @click="act('interact', { action: 'wake' })"
-                  >
-                    叫醒它</button
-                  ><button
-                    class="button"
-                    @click="act('interact', { action: 'home' })"
-                  >
-                    回到角落
-                  </button>
-                </div>
-              </div>
-              <div class="divider" />
-              <div class="actions">
-                <button
-                  class="button quiet"
-                  :disabled="
-                    !snapshot.config.allow_cursor_chase || snapshot.quiet
-                  "
-                  @click="act('interact', { action: 'chase' })"
-                >
-                  体验光标追逐</button
-                ><button
-                  class="button quiet"
-                  :disabled="
-                    !snapshot.config.allow_hide_icons ||
-                    snapshot.config.level !== 'Devil' ||
-                    snapshot.quiet ||
-                    snapshot.hidden
-                  "
-                  @click="act('interact', { action: 'hide' })"
-                >
-                  体验图标捉迷藏</button
-                ><small>高级互动需要在偏好设置中单独授权。</small>
-              </div>
-            </div>
+            <button class="chat-close button quiet" @click="close"><Icon name="close" :size="16" /><span>收起面板</span></button>
+            <AgentChat @settings="agentSettings" @close="close" />
           </template>
           <template v-else-if="page === 1">
+            <section class="card"><div class="section-title"><div><h3>Agent 与 Skills</h3><p class="field-help">模型、MCP 连接和技能现在有独立的管理页面。</p></div><button class="button" @click="agentSettings()">打开 Agent 设置</button></div></section>
             <section class="card">
               <div class="section-title">
                 <h3>基本信息</h3>
@@ -852,7 +823,7 @@ onUnmounted(() => {
               <div class="setting-row">
                 <div>
                   <strong>允许追逐光标</strong>
-                  <p>仅做视觉互动，不移动鼠标、不拦截点击。</p>
+                  <p>双击宠物结束，最长 10 秒；不移动鼠标，透明区域点击穿透。</p>
                 </div>
                 <label class="switch"
                   ><input
@@ -867,7 +838,13 @@ onUnmounted(() => {
               <div class="setting-row">
                 <div>
                   <strong>桌面图标捉迷藏</strong>
-                  <p>高级捣蛋需单独授权，可随时恢复。</p>
+                  <p>
+                    {{
+                      snapshot.platform === "windows"
+                        ? "冷落时在桌面隐藏图标，在应用中追逐（均需授权）；双击宠物结束。"
+                        : "高级捣蛋需单独授权；双击宠物归还图标。"
+                    }}
+                  </p>
                 </div>
                 <button
                   class="button"
@@ -944,6 +921,13 @@ onUnmounted(() => {
                 >
               </div>
               <div class="setting-row">
+                <div><strong>中转站存储目录</strong><p>剪切板历史和中转内容共用此内容库。请选择空文件夹，切换时复制已有内容并保留原目录。</p></div>
+                <button class="button" aria-label="选择中转站存储目录" :disabled="storageChoosing || snapshot.content.storage.busy" @click="chooseStorage('content')">更换目录</button>
+              </div>
+              <p class="field-help storage-path">{{ snapshot.content.storage.content }}</p>
+              <div v-if="snapshot.content.storage.busy" class="actions"><span class="muted">正在切换目录 · 已复制 {{ bytes(snapshot.content.progress['storage-move']?.[1] ?? 0) }}</span><button class="button" @click="cancel('storage-move')">取消切换</button></div>
+              <div v-if="snapshot.content.storage.error" class="alert error">{{ snapshot.content.storage.error }}</div>
+              <div class="setting-row">
                 <div>
                   <strong>下载拖入的网络资源</strong>
                   <p>明确的图片或文件可下载；普通网页链接只作记录。</p>
@@ -962,7 +946,55 @@ onUnmounted(() => {
                 收藏和中转内容不会自动删除。仅收纳远程资源时下载，无上传。
               </p>
             </section>
+            <section class="card" v-if="snapshot.platform === 'windows'">
+              <div class="section-title">
+                <h3>此电脑 · Mochi 文件箱</h3>
+                <span>本地展示入口</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <strong>在此电脑显示文件箱</strong>
+                  <p>展示中转站和我的收藏；目录内的改动不会写回内容库。</p>
+                </div>
+                <label class="switch"
+                  ><input
+                    type="checkbox"
+                    aria-label="在此电脑显示文件箱"
+                    :checked="snapshot.config.explorer_enabled"
+                    @change="
+                      setting('explorer_enabled', checked($event))
+                    " /><span
+                /></label>
+              </div>
+              <p class="field-help storage-path">
+                {{ snapshot.content.storage.explorer }} · 展示副本
+                {{ bytes(snapshot.content.explorer.bytes) }}
+              </p>
+              <div class="actions"><button class="button" aria-label="选择 Mochi 文件箱目录" :disabled="storageChoosing || snapshot.content.storage.busy" @click="chooseStorage('explorer')">更换文件箱目录</button></div>
+              <p class="field-help">
+                展示副本另占磁盘，使用内容库空间上限作为独立限额。停用入口保留已导出的文件。
+              </p>
+              <div class="alert error" v-if="snapshot.content.explorer.error">
+                {{ snapshot.content.explorer.error }}
+              </div>
+              <div class="actions">
+                <button
+                  class="button"
+                  :disabled="!snapshot.config.explorer_enabled"
+                  @click="act('explorer_open')"
+                >
+                  打开文件箱</button
+                ><button
+                  class="button"
+                  :disabled="!snapshot.config.explorer_enabled"
+                  @click="act('explorer_refresh')"
+                >
+                  刷新展示副本
+                </button>
+              </div>
+            </section>
           </template>
+          <template v-else-if="page === 6"><AgentPreferences :initial-tab="agentTab" /></template>
           <template v-else-if="page === 2"
             ><section class="card journal-intro">
               <span class="interaction-icon peach"
@@ -1119,6 +1151,11 @@ onUnmounted(() => {
                   </button>
                 </div>
                 <div class="actions" v-else>
+                  <button class="button" @click="openDelivery">
+                    选择待发送文件<span v-if="snapshot.content.delivery.count">
+                      · {{ snapshot.content.delivery.count }}</span
+                    >
+                  </button>
                   <button class="button primary" @click="addFiles(false)">
                     <Icon name="plus" :size="16" />添加文件</button
                   ><button class="button" @click="addFiles(true)">
@@ -1135,6 +1172,20 @@ onUnmounted(() => {
                     : `拖到宠物上即可收纳 · 原文件不移动、不删除 · 导出缓存 ${bytes(snapshot.content.records.export_bytes)}`
                 }}
               </p>
+              <p v-if="page === 5" class="field-help">
+                最近拖入的多批内容会默认勾选，Alt + 拖动桌宠投递；普通拖动搬家。当前已选 {{ snapshot.content.delivery.count }} 个{{
+                  snapshot.content.delivery.count &&
+                  !snapshot.content.delivery.ready
+                    ? " · 正在准备可拖出的文件"
+                    : ""
+                }}。
+              </p>
+              <div
+                class="alert error"
+                v-if="page === 5 && snapshot.content.delivery.error"
+              >
+                {{ snapshot.content.delivery.error }} · 重新选择文件可重试。
+              </div>
               <div v-if="snapshot.content.access" class="alert error">
                 {{ snapshot.content.access }}
               </div>
@@ -1357,7 +1408,7 @@ onUnmounted(() => {
           <span class="spinner" /> 正在连接你的桌宠…
         </div>
       </main>
-      <footer class="recovery-bar">
+      <footer v-if="page !== 0" class="recovery-bar">
         <button
           class="restore-button"
           @click="act('restore', {}, '已停止捣蛋，正在恢复桌面。')"
@@ -1448,6 +1499,83 @@ onUnmounted(() => {
         <button class="icon-button" aria-label="关闭大图" @click="zoom = false">
           <Icon name="close" /></button
         ><img v-if="preview.image" :src="preview.image" alt="图片大图预览" />
+      </section>
+    </div>
+    <div
+      v-if="deliveryOpen"
+      class="modal-backdrop delivery-backdrop"
+      @click.self="deliveryOpen = false"
+    >
+      <section
+        class="modal delivery-modal"
+        role="dialog"
+        aria-label="选择待发送文件"
+      >
+        <h2>让桌宠帮你带过去</h2>
+        <p>选择后按住 Alt 拖动桌宠到支持文件的目标，松手即可投递。普通拖动搬家，文件夹计为一项。</p>
+        <div class="delivery-tabs">
+          <button
+            class="button"
+            :class="{ primary: deliveryTab === 'recent' }"
+            @click="deliveryTab = 'recent'"
+          >
+            最近拖入 / 已选</button
+          ><button
+            class="button"
+            :class="{ primary: deliveryTab === 'favorites' }"
+            @click="deliveryTab = 'favorites'"
+          >
+            我的收藏</button
+          ><button
+            class="button"
+            :class="{ primary: deliveryTab === 'all' }"
+            @click="deliveryTab = 'all'"
+          >
+            全部内容
+          </button>
+        </div>
+        <input
+          class="delivery-search"
+          v-model="deliverySearch"
+          placeholder="搜索文件名"
+          aria-label="搜索待发送文件"
+        />
+        <div class="delivery-list">
+          <label
+            v-for="choice in deliveryChoices"
+            :key="pickKey(choice.pick)"
+            class="delivery-choice"
+            ><input
+              type="checkbox"
+              :checked="
+                deliveryDraft.some(
+                  (pick) => pickKey(pick) === pickKey(choice.pick),
+                )
+              "
+              @change="togglePick(choice.pick)"
+            /><Icon
+              :name="choice.directory ? 'folder' : 'file'"
+              :size="20"
+            /><span>{{ choice.name }}</span
+            ><small v-if="choice.favorite">收藏</small
+            ><small v-if="choice.recent">最近拖入</small></label
+          >
+          <p class="muted" v-if="!deliveryChoices.length">
+            这里还没有内容，可从收藏或全部内容选择。
+          </p>
+        </div>
+        <p class="field-help">
+          下一批从开始拖动桌宠投递时计起；取消或目标拒收会保留本次选择供重试。
+        </p>
+        <div class="actions end">
+          <button class="button quiet" @click="deliveryDraft = []">
+            清空选择</button
+          ><span class="muted">已选 {{ deliveryDraft.length }} 项</span
+          ><button class="button" @click="deliveryOpen = false">取消</button
+          ><button class="button primary" @click="applyDelivery">
+            确认待发送
+          </button>
+        </div>
       </section>
     </div>
   </div>

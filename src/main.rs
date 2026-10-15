@@ -186,19 +186,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     };
     let canvas = active_skin.ui.canvas;
     let page = value("--settings-page")?;
-    let settings_page =
-        match page.as_deref() {
-            None | Some("home") => 0,
-            Some("preferences") => 1,
-            Some("journal") => 2,
-            Some("skin") => 3,
-            Some("clipboard") => 4,
-            Some("transfer") => 5,
-            Some(_) => return Err(
-                "Settings page must be home, preferences, journal, skin, clipboard, or transfer"
-                    .into(),
-            ),
-        };
+    let settings_page = match page.as_deref() {
+        None | Some("home") => 0,
+        Some("preferences") => 1,
+        Some("journal") => 2,
+        Some("skin") => 3,
+        Some("clipboard") => 4,
+        Some("transfer") => 5,
+        Some("agent") => 6,
+        Some(_) => return Err(
+            "Settings page must be home, preferences, journal, skin, clipboard, transfer, or agent"
+                .into(),
+        ),
+    };
     let options = Options {
         settings: first_run
             || page.is_some()

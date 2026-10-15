@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-15",
+  "platform": "Windows x64 / WebView2",
+  "rust": {
+    "release_workspace_tests": 74,
+    "clippy_all_targets": "passed",
+    "fmt": "passed"
+  },
+  "frontend": "Vue/TypeScript release build passed",
+  "native_ui": {
+    "passed": true,
+    "checks": [
+      "真实 Tauri 窗口与六页导航",
+      "昵称中文输入与配置持久化",
+      "宠物互动调用原生引擎",
+      "单独授权提示保持安全默认值",
+      "剪切板全文搜索与原生导出准备",
+      "中转站大图与收藏",
+      "皮肤重载接口与独立接收区域",
+      "多批拖入按文件累加默认选择，删除原件仍能取用",
+      "待发送选择器支持逐文件修改、收藏与清空",
+      "原生窗口拒绝无按键的过期拖动，取消后保留选择",
+      "此电脑文件箱展示独立副本，目录新增不写回记录",
+      "系统窗口关闭保存昵称草稿",
+      "窗口关闭后宠物继续运行"
+    ],
+    "screenshots": [
+      "delivery-picker-panel.png",
+      "filebox-preferences-panel.png"
+    ]
+  },
+  "shell": "Isolated HKCU registration, This PC Shell COM enumeration and child resolution, uninstall passed",
+  "limitations": [
+    "Cross-application OLE acceptance requires physical drag compatibility checks in Explorer, browsers and chat apps",
+    "macOS checks skipped at user request"
+  ],
+  "interaction_revision": {
+    "gestures": "Normal drag moves pet; Alt+drag delivers selected files",
+    "focus": "Same-page minimized panel restored and verified as the native foreground window",
+    "release_workspace_tests": 74,
+    "native_ui": {
+      "passed": true,
+      "checks": [
+        "真实 Tauri 窗口与六页导航",
+        "相同页面再次打开时恢复最小化窗口并前置聚焦",
+        "昵称中文输入与配置持久化",
+        "宠物互动调用原生引擎",
+        "单独授权提示保持安全默认值",
+        "剪切板全文搜索与原生导出准备",
+        "中转站大图与收藏",
+        "皮肤重载接口与独立接收区域",
+        "多批拖入按文件累加默认选择，删除原件仍能取用",
+        "待发送选择器支持逐文件修改、收藏与清空",
+        "原生窗口拒绝无按键的过期拖动，取消后保留选择",
+        "此电脑文件箱展示独立副本，目录新增不写回记录",
+        "系统窗口关闭保存昵称草稿",
+        "窗口关闭后宠物继续运行"
+      ]
+    },
+    "clippy": "Blocked by pre-existing collapsible_if in concurrently edited src/agent/mod.rs",
+    "macos": "Not checked at user request"
+  }
+}

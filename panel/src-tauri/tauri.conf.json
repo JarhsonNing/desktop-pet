@@ -5,10 +5,10 @@
   "identifier": "dev.jarhsonning.mochi.panel",
   "build": { "frontendDist": "../dist" },
   "app": {
-    "withGlobalTauri": true,
+    "withGlobalTauri": false,
     "windows": [{ "label": "main", "title": "麻薯 Mochi", "width": 1120, "height": 790, "minWidth": 900, "minHeight": 650, "dragDropEnabled": false, "devtools": false, "center": true }],
     "security": {
-      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; frame-src 'none'"
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; frame-src 'self'"
     }
   },
   "bundle": { "active": false }

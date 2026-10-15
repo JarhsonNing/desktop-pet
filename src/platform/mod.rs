@@ -25,8 +25,15 @@ pub use macos::{
 };
 #[cfg(target_os = "windows")]
 pub use windows::{
-    cursor, cursor_position, hide_icons, parent_alive, restore_icons, snapshot, work_areas,
+    cursor, cursor_position, desktop_is_foreground, hide_icons, parent_alive, restore_icons,
+    snapshot, work_areas,
 };
+
+// Desktop foreground detection currently applies to Windows; keep other platforms' behavior.
+#[cfg(not(target_os = "windows"))]
+pub fn desktop_is_foreground() -> bool {
+    true
+}
 
 pub fn supported() -> bool {
     cfg!(any(target_os = "windows", target_os = "macos"))

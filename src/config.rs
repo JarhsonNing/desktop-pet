@@ -36,6 +36,7 @@ pub struct Config {
     pub clipboard_limit: u32,
     pub content_quota_gib: u32,
     pub download_dropped_resources: bool,
+    pub explorer_enabled: bool,
 }
 
 impl Default for Config {
@@ -61,6 +62,7 @@ impl Default for Config {
             clipboard_limit: 500,
             content_quota_gib: 5,
             download_dropped_resources: true,
+            explorer_enabled: false,
         }
     }
 }

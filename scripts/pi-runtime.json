@@ -1,0 +1,10 @@
+{
+  "version": "1.2.0",
+  "release": "https://github.com/earendil-works/pi/releases/download/v1.2.0/",
+  "targets": {
+    "x86_64-pc-windows-msvc": {"asset": "pi-windows-x64.zip", "sha256": "bd272b508657ad8d0ac6176e7751913c848a89cfb8cbe21ff319941e6ca140be"},
+    "aarch64-apple-darwin": {"asset": "pi-darwin-arm64.tar.gz", "sha256": "abddf7688b4b6781d9113f63cd578e3c01dcdb87e71f66e7ec1c9ec6c76178d1"},
+    "x86_64-apple-darwin": {"asset": "pi-darwin-x64.tar.gz", "sha256": "e079ff016ae78279cfbd6c1b4fffe072162f4a7bb879ad61b04e2e43bcc53455"}
+  },
+  "license": {"url": "https://raw.githubusercontent.com/earendil-works/pi/v1.2.0/LICENSE", "sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"}
+}

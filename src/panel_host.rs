@@ -105,6 +105,16 @@ impl Panel {
         self.sender.clone()
     }
     pub fn send(&self, message: Message) {
+        // The pet receives the user's click; authorize its separate panel process
+        // to take the foreground before asking that process to show/focus itself.
+        #[cfg(windows)]
+        if matches!(message.event.as_deref(), Some("focus" | "navigate")) {
+            unsafe {
+                let _ = windows::Win32::UI::WindowsAndMessaging::AllowSetForegroundWindow(
+                    self.child.id(),
+                );
+            }
+        }
         let _ = self.sender.send(message);
     }
     pub fn exited(&mut self) -> bool {

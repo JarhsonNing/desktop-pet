@@ -95,7 +95,7 @@ define_class!(
         #[unsafe(method(draggingSession:sourceOperationMaskForDraggingContext:))]
         fn operations(&self,_:&NSDraggingSession,_:NSDraggingContext)->NSDragOperation {NSDragOperation::Copy}
         #[unsafe(method(draggingSession:endedAtPoint:operation:))]
-        fn drag_ended(&self,_:&NSDraggingSession,_:NSPoint,_:NSDragOperation){self.ivars().shared.emit(Event::DragFinished);}
+        fn drag_ended(&self,_:&NSDraggingSession,_:NSPoint,operation:NSDragOperation){self.ivars().shared.emit(Event::DragFinished { accepted: operation == NSDragOperation::Copy });}
         #[unsafe(method(ignoreModifierKeysForDraggingSession:))]
         fn ignore_modifiers(&self,_:&NSDraggingSession)->bool {true}
     }
@@ -137,7 +137,7 @@ impl Bridge {
         let shared = Arc::new(Shared {
             sender,
             context,
-            directory: directory.join("content/incoming"),
+            directory,
             alive: AtomicBool::new(true),
             quota: AtomicU64::new(5 * 1024 * 1024 * 1024),
             jobs: Mutex::new(HashMap::new()),
@@ -536,7 +536,14 @@ fn receive_promises(
     if objects.is_empty() {
         return false;
     }
-    let directory = shared.directory.join(format!(
+    let incoming = match super::incoming_directory(&shared.directory) {
+        Ok(directory) => directory,
+        Err(error) => {
+            shared.emit(Event::Error(error.to_string()));
+            return false;
+        }
+    };
+    let directory = incoming.join(format!(
         "promise-{}-{}",
         crate::safety::timestamp(),
         NEXT_INCOMING.fetch_add(1, Ordering::Relaxed)
